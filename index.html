@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Stock Watch</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #121a2b;
+        --panel-2: #1b2438;
+        --line: rgba(255,255,255,0.08);
+        --text: #edf3ff;
+        --muted: #a8b4d0;
+        --green: #2ad48d;
+        --red: #ff5d73;
+        --amber: #ffb84d;
+        --blue: #66a8ff;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background: linear-gradient(180deg, #0a1021 0%, #111827 100%);
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 28px 20px 60px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0 28px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .logo {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--blue), #7a6cff);
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        box-shadow: 0 12px 25px rgba(102, 168, 255, 0.35);
+      }
+
+      .subtext {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .header-box {
+        margin-top: 26px;
+        background: rgba(19, 27, 42, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 24px 28px;
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(30px, 4vw, 52px);
+        line-height: 1.1;
+      }
+
+      .lead {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        gap: 14px;
+        align-self: center;
+      }
+
+      .stat {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px 16px;
+      }
+
+      .stat .label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .stat .value {
+        font-size: 23px;
+        font-weight: 700;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        background: rgba(42, 212, 141, 0.08);
+        color: var(--green);
+        border: 1px solid rgba(42, 212, 141, 0.25);
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .summary-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .summary-box {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 14px;
+      }
+
+      .summary-box .label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+
+      .summary-box .value {
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .market-overview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        gap: 14px;
+        margin-top: 28px;
+      }
+
+      .overview-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .overview-card h4 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .overview-card .big {
+        font-size: 28px;
+        font-weight: 800;
+      }
+
+      .overview-card .small {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      .signal-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+        gap: 14px;
+        margin-top: 28px;
+      }
+
+      .signal-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .signal-card h4 {
+        margin: 0 0 8px;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .signal-card .large {
+        font-size: 28px;
+        font-weight: 800;
+      }
+
+      .signal-card .note {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .toolbar {
+        margin-top: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .toolbar-left, .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .search-box {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+        min-width: min(100%, 260px);
+        color: var(--text);
+      }
+
+      .search-box input {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+      }
+
+      .filter-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.02);
+        color: var(--muted);
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .chip.active {
+        background: rgba(102,168,255,0.13);
+        border-color: rgba(102,168,255,0.35);
+        color: var(--text);
+      }
+
+      .action-btn {
+        border: 1px solid rgba(102,168,255,0.3);
+        background: rgba(102,168,255,0.08);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .table-wrap {
+        margin-top: 18px;
+        overflow: hidden;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(16, 22, 37, 0.85);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th, td {
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+      }
+
+      th {
+        background: rgba(255,255,255,0.03);
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      tbody tr:hover {
+        background: rgba(255,255,255,0.02);
+      }
+
+      .ticker {
+        font-weight: 700;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .status.up { background: rgba(42,212,141,0.13); color: var(--green); }
+      .status.down { background: rgba(255,93,115,0.12); color: var(--red); }
+
+      .analysis-grid {
+        margin-top: 32px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .detail-panel {
+        margin-top: 30px;
+        background: linear-gradient(180deg, rgba(18,26,43,0.95), rgba(13,18,31,0.9));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 22px;
+      }
+
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .detail-header h2 {
+        margin: 6px 0 0;
+        font-size: clamp(24px, 3vw, 38px);
+      }
+
+      .detail-price {
+        text-align: right;
+      }
+
+      .detail-price strong {
+        display: block;
+        font-size: clamp(24px, 3vw, 36px);
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 0.8fr;
+        gap: 18px;
+      }
+
+      .detail-chart,
+      .detail-summary {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+      }
+
+      .detail-summary h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .detail-summary ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .detail-summary li::before {
+        content: "•";
+        color: var(--blue);
+        margin-right: 10px;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(7, 11, 19, 0.72);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 100;
+      }
+
+      .modal-backdrop.visible {
+        display: flex;
+      }
+
+      .modal {
+        width: min(900px, 100%);
+        background: #101827;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .close-btn {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text);
+        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        font-size: 22px;
+      }
+
+      .modal-body {
+        padding: 20px;
+      }
+
+      .modal-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+
+      .modal-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(80px, 1fr));
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .mini-stat {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+      }
+
+      .mini-stat span {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .mini-stat strong {
+        display: block;
+        margin-top: 6px;
+        font-size: 18px;
+      }
+
+      .news-panel {
+        margin-top: 30px;
+        background: linear-gradient(180deg, rgba(18,26,43,0.95), rgba(13,18,31,0.9));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 22px;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .panel-header h3 {
+        margin: 0;
+        font-size: clamp(22px, 2.5vw, 32px);
+      }
+
+      .news-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+      }
+
+      .news-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .news-tag {
+        display: inline-block;
+        background: rgba(42,212,141,0.12);
+        color: var(--green);
+        border: 1px solid rgba(42,212,141,0.2);
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .news-card h4 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+
+      .news-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 14px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(18,26,43,0.95), rgba(13,18,31,0.9));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18px 18px 16px;
+        box-shadow: 0 16px 35px rgba(0,0,0,0.15);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .company {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .company-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(102,168,255,0.28), rgba(122,108,255,0.2));
+        color: var(--text);
+      }
+
+      .company-name {
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .company-name small {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-top: 2px;
+      }
+
+      .price-box {
+        text-align: right;
+      }
+
+      .price {
+        font-weight: 800;
+        font-size: 18px;
+      }
+
+      .change {
+        font-size: 12px;
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .chart-box {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.015);
+        margin-bottom: 14px;
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: 130px;
+      }
+
+      .analysis-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 14px;
+      }
+
+      .analysis-list li {
+        position: relative;
+        padding-left: 18px;
+        margin-bottom: 6px;
+      }
+
+      .analysis-list li::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--blue);
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .tag {
+        background: rgba(102,168,255,0.12);
+        color: var(--blue);
+        border: 1px solid rgba(102,168,255,0.26);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      a.button {
+        text-decoration: none;
+        color: #fff;
+        background: linear-gradient(135deg, #0d67ff, #6b81ff);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 760px) {
+        .header-box {
+          grid-template-columns: 1fr;
+        }
+
+        th:nth-child(3),
+        td:nth-child(3),
+        th:nth-child(5),
+        td:nth-child(5) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo">G</div>
+          <span>Global Stock Watch</span>
+        </div>
+        <div class="subtext">NASDAQ · NYSE · AI / Cloud / Semis</div>
+      </div>
+
+      <section class="header-box">
+        <div>
+          <div class="pill">최근 급등 후 조정 구간 관찰</div>
+          <h1>해외대형주 급등 후 조정 종목</h1>
+          <p class="lead">
+            최근 시장은 AI, 반도체, 클라우드, 플랫폼 성장주 중심으로 급등세를 이어가다
+            단기적으로는 차익실현과 금리 불확실성에 따라 조정 압력이 커지고 있습니다.
+            아래 종목들은 시가총액 기준 상위권에서 상대적으로 강한 업사이드와 지지대가
+            형성되고 있어 관심 종목으로 제시합니다.
+          </p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <span class="label">관찰 종목</span>
+            <span class="value">10</span>
+          </div>
+          <div class="stat">
+            <span class="label">평균 시총</span>
+            <span class="value">$1.8T</span>
+          </div>
+          <div class="stat">
+            <span class="label">강세 비중</span>
+            <span class="value">80%</span>
+          </div>
+          <div class="stat">
+            <span class="label">조정 수준</span>
+            <span class="value">-8~15%</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="summary-row">
+        <div class="summary-box">
+          <span class="label">시장 스냅샷</span>
+          <span class="value" id="market-snapshot">강세</span>
+        </div>
+        <div class="summary-box">
+          <span class="label">종목 수</span>
+          <span class="value" id="summary-count">10</span>
+        </div>
+        <div class="summary-box">
+          <span class="label">마지막 갱신</span>
+          <span class="value" id="last-refresh">--:--</span>
+        </div>
+      </div>
+
+      <div class="market-overview">
+        <div class="overview-card">
+          <h4>상위 강세</h4>
+          <div class="big" id="top-gainer">MSFT</div>
+          <div class="small" id="top-gainer-rate">+18.7%</div>
+        </div>
+        <div class="overview-card">
+          <h4>가장 약세</h4>
+          <div class="big" id="top-loser">PLTR</div>
+          <div class="small" id="top-loser-rate">-4.1%</div>
+        </div>
+        <div class="overview-card">
+          <h4>테마 평균</h4>
+          <div class="big" id="theme-average">+1.4%</div>
+          <div class="small" id="theme-average-detail">AI / Cloud / Semis</div>
+        </div>
+      </div>
+
+      <div class="signal-row">
+        <div class="signal-card">
+          <h4>매수 신호</h4>
+          <div class="large" id="buy-signal">3</div>
+          <div class="note">지지 확인 중</div>
+        </div>
+        <div class="signal-card">
+          <h4>관망</h4>
+          <div class="large" id="watch-signal">4</div>
+          <div class="note">리스크 점검</div>
+        </div>
+        <div class="signal-card">
+          <h4>매도 신호</h4>
+          <div class="large" id="sell-signal">3</div>
+          <div class="note">차익실현</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="search-box">
+            <input id="stock-search" type="text" placeholder="종목명 또는 티커 검색" />
+          </div>
+          <div class="filter-group" id="filter-group"></div>
+        </div>
+        <div class="toolbar-right">
+          <button class="action-btn" id="refresh-btn" type="button">새로고침</button>
+          <span class="subtext">실시간 감시 기준: Google Finance</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>종목</th>
+              <th>업종</th>
+              <th>시가총액</th>
+              <th>최근 수익률</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody id="stock-table-body"></tbody>
+        </table>
+      </div>
+
+      <section class="analysis-grid" id="analysis-grid"></section>
+      <section class="detail-panel" id="detail-panel"></section>
+
+      <section class="table-wrap" style="margin-top: 28px;">
+        <table>
+          <thead>
+            <tr>
+              <th>비교</th>
+              <th>종목</th>
+              <th>주가</th>
+              <th>수익률</th>
+              <th>강도</th>
+            </tr>
+          </thead>
+          <tbody id="compare-table"></tbody>
+        </table>
+      </section>
+
+      <div class="modal-backdrop" id="stock-modal">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 id="modal-title">종목 상세</h3>
+            <button class="close-btn" id="modal-close" aria-label="닫기">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="modal-grid">
+              <div>
+                <canvas id="modal-chart" height="220"></canvas>
+              </div>
+              <div>
+                <div class="detail-price" style="text-align:left;">
+                  <strong id="modal-price">$0.00</strong>
+                  <span id="modal-change" class="status up" style="margin-top:8px; display:inline-flex;">+0.00%</span>
+                </div>
+                <div class="modal-stats">
+                  <div class="mini-stat">
+                    <span>시총</span>
+                    <strong id="modal-marketcap">-</strong>
+                  </div>
+                  <div class="mini-stat">
+                    <span>업종</span>
+                    <strong id="modal-sector">-</strong>
+                  </div>
+                  <div class="mini-stat">
+                    <span>상태</span>
+                    <strong id="modal-status">-</strong>
+                  </div>
+                </div>
+                <p class="lead" id="modal-summary" style="margin-top:16px;">-</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="news-panel">
+        <div class="panel-header">
+          <h3>시장 뉴스 & 체크포인트</h3>
+          <span class="subtext">특징주와 macro 이슈 요약</span>
+        </div>
+        <div class="news-grid" id="news-grid"></div>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+      const stocks = [
+        {
+          rank: 1,
+          name: 'Microsoft',
+          ticker: 'MSFT',
+          exchange: 'NASDAQ',
+          sector: 'Software / Cloud',
+          category: 'cloud',
+          marketCap: '$3.2T',
+          return: '+18.7%',
+          status: '강세 유지',
+          statusClass: 'up',
+          price: '$428.50',
+          change: '+2.40%',
+          summary: 'AI 비즈니스 확장과 Azure 성장세로 장기 추세가 유지되고 있으며, 최근 조정은 20일 이동평균선 지지 재테스트로 해석됩니다.',
+          notes: [
+            '주가가 20주 이동평균선과 50주 이동평균선 사이에서 지지 받는 흐름을 보이고 있음',
+            'AI 데이터센터와 클라우드 수익성이 함께 개선되며 상승 모멘텀 유지',
+            '조정 국면에서는 $410~$420 구간에서 반등 가능성이 높음'
+          ],
+          pattern: [36, 41, 39, 47, 52, 49, 56, 60, 58, 65, 68, 71, 67, 73, 70, 76, 74, 79, 75, 83],
+          color: '#66a8ff'
+        },
+        {
+          rank: 2,
+          name: 'Apple',
+          ticker: 'AAPL',
+          exchange: 'NASDAQ',
+          sector: 'Consumer Electronics',
+          category: 'growth',
+          marketCap: '$3.0T',
+          return: '+12.4%',
+          status: '모멘텀 정리',
+          statusClass: 'down',
+          price: '$227.80',
+          change: '+1.10%',
+          summary: '반도체와 서비스 사업의 개선으로 상승 흐름이 지속되고 있지만, 단기적으로는 과매수 구간에서 조정을 받고 있습니다.',
+          notes: [
+            '상승세는 유지되나 RSI가 과열 구간에서 둔화되는 모습',
+            '고가 부근에서 차익실현이 나오고 있지만 장기 추세는 여전히 우상향',
+            '지지선은 $220~$223 영역으로 판단'
+          ],
+          pattern: [28, 30, 33, 31, 35, 40, 42, 38, 44, 47, 46, 52, 50, 54, 52, 57, 56, 60, 58, 62],
+          color: '#8dd2ff'
+        },
+        {
+          rank: 3,
+          name: 'NVIDIA',
+          ticker: 'NVDA',
+          exchange: 'NASDAQ',
+          sector: 'Semiconductors',
+          category: 'semis',
+          marketCap: '$2.9T',
+          return: '+24.3%',
+          status: '급등 후 조정',
+          statusClass: 'down',
+          price: '$135.40',
+          change: '-3.20%',
+          summary: 'GPU 수요와 AI 서버 투자 강세가 여전히 유지되지만 단기 차익매물이 이어지며 조정 국면에 들어섰습니다.',
+          notes: [
+            '주가가 최근 고점에서 8~12% 조정되며 매물대 형성',
+            '지지선은 20일 이동평균선 주변으로 보이며 반등 가능성이 존재',
+            '반도체 업황 호조가 지속된다면 조정 후 재상승 가능성 큼'
+          ],
+          pattern: [12, 15, 18, 22, 24, 30, 34, 31, 38, 42, 46, 54, 58, 62, 60, 68, 70, 73, 67, 71],
+          color: '#6ce9a8'
+        },
+        {
+          rank: 4,
+          name: 'Amazon',
+          ticker: 'AMZN',
+          exchange: 'NASDAQ',
+          sector: 'E-Commerce / Cloud',
+          category: 'cloud',
+          marketCap: '$2.2T',
+          return: '+16.5%',
+          status: '지지 유지',
+          statusClass: 'up',
+          price: '$188.20',
+          change: '+1.80%',
+          summary: 'AWS와 광고 수익 증가로 강한 성장세가 유지되고 있으며, 조정은 분할 매수 기회로 해석되고 있습니다.',
+          notes: [
+            '최근 5주간 상승률이 높아 조정 시 매수 관심이 증가하는 구간',
+            '주가가 50주 이동평균선 위에 위치하고 있어 지지 기반 유지',
+            '상반기 대비 기술주 상대수익률 개선 흐름'
+          ],
+          pattern: [22, 24, 25, 27, 30, 34, 36, 35, 39, 44, 43, 48, 50, 52, 49, 55, 58, 60, 57, 63],
+          color: '#ffb84d'
+        },
+        {
+          rank: 5,
+          name: 'Alphabet',
+          ticker: 'GOOGL',
+          exchange: 'NASDAQ',
+          sector: 'Internet / Ads',
+          category: 'growth',
+          marketCap: '$2.1T',
+          return: '+14.1%',
+          status: '강세 후 정리',
+          statusClass: 'down',
+          price: '$180.10',
+          change: '-1.30%',
+          summary: '검색 광고와 클라우드 성장세가 유지되고 있으나, 고점 부담으로 단기 조정이 이어지고 있습니다.',
+          notes: [
+            '가격이 최근 고점 주변에서 횡보하며 상승 추세의 안정화 단계로 진입',
+            'AI 투자에도 실적 성장 대비 비용 부담이 제한적이고 밸류에이션 안정',
+            '지지선은 $170~$172 범위로 예상'
+          ],
+          pattern: [18, 20, 23, 24, 22, 26, 28, 31, 33, 35, 34, 38, 40, 41, 39, 43, 45, 46, 44, 48],
+          color: '#b9a9ff'
+        },
+        {
+          rank: 6,
+          name: 'Meta',
+          ticker: 'META',
+          exchange: 'NASDAQ',
+          sector: 'Internet / Social',
+          category: 'growth',
+          marketCap: '$1.6T',
+          return: '+19.8%',
+          status: '상승 지속',
+          statusClass: 'up',
+          price: '$510.60',
+          change: '+2.10%',
+          summary: '광고 매출 회복과 AI 인프라 투자 성장 기대가 강한 종목으로, 조정 폭은 제한적입니다.',
+          notes: [
+            '20주 이동평균선이 지지 역할을 하고 있어 조정 수용력 높음',
+            '주가가 고점 부근에서 박스권 통과를 시도하는 중',
+            '디지털 광고 업황 회복이라는 큰 테마가 뒷받침'
+          ],
+          pattern: [26, 30, 29, 33, 37, 39, 43, 48, 52, 55, 57, 60, 58, 61, 67, 68, 72, 75, 73, 79],
+          color: '#72d6ff'
+        },
+        {
+          rank: 7,
+          name: 'Broadcom',
+          ticker: 'AVGO',
+          exchange: 'NASDAQ',
+          sector: 'Semiconductors / Networking',
+          category: 'semis',
+          marketCap: '$1.2T',
+          return: '+22.9%',
+          status: '급등 후 반등',
+          statusClass: 'down',
+          price: '$163.10',
+          change: '-2.50%',
+          summary: '반도체와 AI 관련 매출 확장이 이어지며 상승 속도가 강했지만, 단기 과열로 조정이 나타나고 있습니다.',
+          notes: [
+            '차트상 상승폭이 크게 커지고 있어 조정 시점이 자연스러운 구간',
+            '상대 강도지수는 상승 후 약세로 전환 중이지만 추세는 유지',
+            '지지선은 $150~$155 영역에서 기대'
+          ],
+          pattern: [14, 18, 20, 23, 28, 31, 36, 39, 42, 47, 50, 54, 56, 58, 55, 60, 66, 70, 68, 73],
+          color: '#7ae7b0'
+        },
+        {
+          rank: 8,
+          name: 'AMD',
+          ticker: 'AMD',
+          exchange: 'NASDAQ',
+          sector: 'Semiconductors / AI',
+          category: 'semis',
+          marketCap: '$290B',
+          return: '+20.1%',
+          status: '탄력 유지',
+          statusClass: 'up',
+          price: '$171.20',
+          change: '+1.70%',
+          summary: 'AI 서버와 데이터센터 수요가 강한 가운데, 단기 조정이 있었지만 여전히 상승기조가 유효합니다.',
+          notes: [
+            '상승 추세의 기울기가 유지되고 있어 조정은 재료가 부족할 때 형성',
+            '5일선과 20일선 사이에서 지지 확인 가능',
+            '장기적으로는 반도체 업황 수혜가 가장 강한 종목 중 하나'
+          ],
+          pattern: [11, 13, 17, 20, 24, 28, 30, 34, 37, 41, 45, 48, 52, 55, 53, 58, 63, 67, 65, 71],
+          color: '#ffd36a'
+        },
+        {
+          rank: 9,
+          name: 'Salesforce',
+          ticker: 'CRM',
+          exchange: 'NYSE',
+          sector: 'Enterprise Software',
+          category: 'software',
+          marketCap: '$285B',
+          return: '+13.9%',
+          status: '재료 반영',
+          statusClass: 'up',
+          price: '$298.40',
+          change: '+0.90%',
+          summary: '고객 관리 및 AI 기반 생산성 솔루션이 주목받고 있으며, 조정 폭이 제한적인 편입니다.',
+          notes: [
+            '업종 내에서 상대적인 수익률이 좋아 우량주로 인식',
+            '중기 이평선이 바닥을 지지하는 형태로 보임',
+            '단기 조정은 지지 재테스트로 이해할 수 있는 구간'
+          ],
+          pattern: [18, 21, 22, 24, 28, 29, 32, 35, 34, 38, 41, 43, 46, 50, 49, 52, 55, 58, 57, 60],
+          color: '#7db4ff'
+        },
+        {
+          rank: 10,
+          name: 'Palantir',
+          ticker: 'PLTR',
+          exchange: 'NASDAQ',
+          sector: 'Data / AI Software',
+          category: 'software',
+          marketCap: '$278B',
+          return: '+29.4%',
+          status: '급등 부담',
+          statusClass: 'down',
+          price: '$36.90',
+          change: '-4.10%',
+          summary: 'AI 관련 기대감이 강하게 반영되었고, 현재는 단기 급등 후 차익실현과 조정이 동반되고 있습니다.',
+          notes: [
+            '상승 속도가 빠른 만큼 조정률이 커질 수 있는 구간',
+            '지지선은 $33~$34 근처에 형성되며, 밸류에이션 부담은 여전히 존재',
+            '펀더멘털이 뒷받침된다면 조정 후 재상승 가능성 있음'
+          ],
+          pattern: [7, 10, 12, 16, 21, 24, 30, 33, 36, 42, 48, 52, 57, 61, 58, 64, 70, 75, 72, 79],
+          color: '#ff7db6'
+        }
+      ];
+
+      const tableBody = document.getElementById('stock-table-body');
+      const analysisGrid = document.getElementById('analysis-grid');
+      const detailPanel = document.getElementById('detail-panel');
+      const searchInput = document.getElementById('stock-search');
+      const filterGroup = document.getElementById('filter-group');
+      const refreshBtn = document.getElementById('refresh-btn');
+      const lastRefreshEl = document.getElementById('last-refresh');
+      const summaryCountEl = document.getElementById('summary-count');
+      const marketSnapshotEl = document.getElementById('market-snapshot');
+      const topGainerEl = document.getElementById('top-gainer');
+      const topGainerRateEl = document.getElementById('top-gainer-rate');
+      const topLoserEl = document.getElementById('top-loser');
+      const topLoserRateEl = document.getElementById('top-loser-rate');
+      const themeAverageEl = document.getElementById('theme-average');
+      const themeAverageDetailEl = document.getElementById('theme-average-detail');
+      const buySignalEl = document.getElementById('buy-signal');
+      const watchSignalEl = document.getElementById('watch-signal');
+      const sellSignalEl = document.getElementById('sell-signal');
+      const modal = document.getElementById('stock-modal');
+      const modalClose = document.getElementById('modal-close');
+      const modalTitle = document.getElementById('modal-title');
+      const modalPrice = document.getElementById('modal-price');
+      const modalChange = document.getElementById('modal-change');
+      const modalMarketcap = document.getElementById('modal-marketcap');
+      const modalSector = document.getElementById('modal-sector');
+      const modalStatus = document.getElementById('modal-status');
+      const modalSummary = document.getElementById('modal-summary');
+
+      const marketNews = [
+        {
+          tag: 'AI 테마',
+          title: 'AI 서버 투자 지속',
+          text: 'AI 인프라 수요가 여전히 강해 주요 반도체와 클라우드 업체들의 투자 심리가 견조하게 유지되고 있습니다.'
+        },
+        {
+          tag: '금리',
+          title: '금리 변동성 제한',
+          text: '미 국채 금리의 변동성은 둔화되고 있어, 성장주 중심의 조정 속도가 완만히 안정화될 가능성이 있습니다.'
+        },
+        {
+          tag: '수급',
+          title: '차익실현 부담',
+          text: '최근 급등 종목은 단기적으로 차익실현 압력이 커지고 있으나, 장기 실적 기반은 여전히 우호적입니다.'
+        },
+        {
+          tag: '리스크',
+          title: '밸류에이션 점검',
+          text: '고성장주들은 저점 재확인 없이 계속 상승하기보다는 지지선 확인 후 재시도 흐름을 보일 가능성이 큽니다.'
+        }
+      ];
+
+      const filterOptions = [
+        { key: 'all', label: '전체' },
+        { key: 'semis', label: '반도체' },
+        { key: 'cloud', label: '클라우드' },
+        { key: 'growth', label: '성장주' },
+        { key: 'software', label: '소프트웨어' }
+      ];
+
+      let activeFilter = 'all';
+      let selectedTicker = 'MSFT';
+
+      const updateMeta = (items) => {
+        const bullish = items.filter(item => item.statusClass === 'up').length;
+        summaryCountEl.textContent = String(items.length);
+        marketSnapshotEl.textContent = bullish >= Math.ceil(items.length * 0.6) ? '강세' : '조정';
+
+        const sortedByMove = [...items].sort((a, b) => {
+          const ar = Number.parseFloat((a.return || '0%').replace('%', '')) || 0;
+          const br = Number.parseFloat((b.return || '0%').replace('%', '')) || 0;
+          return br - ar;
+        });
+
+        const topGainer = sortedByMove[0] || items[0];
+        const topLoser = [...items].sort((a, b) => {
+          const ar = Number.parseFloat((a.change || '0%').replace('%', '')) || 0;
+          const br = Number.parseFloat((b.change || '0%').replace('%', '')) || 0;
+          return ar - br;
+        })[0] || items[0];
+
+        const avg = items.length
+          ? items.reduce((total, item) => total + (Number.parseFloat((item.return || '0%').replace('%', '')) || 0), 0) / items.length
+          : 0;
+
+        topGainerEl.textContent = topGainer?.ticker || 'N/A';
+        topGainerRateEl.textContent = topGainer?.return || '+0.0%';
+        topLoserEl.textContent = topLoser?.ticker || 'N/A';
+        topLoserRateEl.textContent = topLoser?.change || '-0.0%';
+        themeAverageEl.textContent = `${avg >= 0 ? '+' : ''}${avg.toFixed(1)}%`;
+        themeAverageDetailEl.textContent = 'AI / Cloud / Semis';
+
+        const buyCount = items.filter(item => item.statusClass === 'up').length;
+        const sellCount = items.filter(item => item.statusClass === 'down').length;
+        const watchCount = Math.max(0, items.length - buyCount - sellCount);
+        buySignalEl.textContent = String(Math.max(0, buyCount));
+        sellSignalEl.textContent = String(Math.max(0, sellCount));
+        watchSignalEl.textContent = String(Math.max(0, watchCount));
+
+        const now = new Date();
+        lastRefreshEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      };
+
+      const getFilteredStocks = () => {
+        const q = searchInput.value.trim().toLowerCase();
+        return stocks.filter(stock => {
+          const matchesFilter = activeFilter === 'all' || stock.category === activeFilter;
+          const matchesSearch = !q || stock.name.toLowerCase().includes(q) || stock.ticker.toLowerCase().includes(q);
+          return matchesFilter && matchesSearch;
+        });
+      };
+
+      const renderFilters = () => {
+        filterGroup.innerHTML = filterOptions.map(option => `
+          <button class="chip ${option.key === activeFilter ? 'active' : ''}" data-filter="${option.key}">
+            ${option.label}
+          </button>
+        `).join('');
+
+        filterGroup.querySelectorAll('.chip').forEach(button => {
+          button.addEventListener('click', () => {
+            activeFilter = button.dataset.filter;
+            renderFilters();
+            renderPage();
+          });
+        });
+      };
+
+      const renderTable = (items) => {
+        tableBody.innerHTML = items.map((stock, index) => `
+          <tr data-ticker="${stock.ticker}" style="cursor:pointer;">
+            <td>#${index + 1}</td>
+            <td>
+              <div class="ticker">${stock.name}</div>
+              <div class="subtext">${stock.ticker}</div>
+            </td>
+            <td>${stock.sector}</td>
+            <td>${stock.marketCap}</td>
+            <td>${stock.return}</td>
+            <td><span class="status ${stock.statusClass}">${stock.status}</span></td>
+          </tr>
+        `).join('');
+
+        tableBody.querySelectorAll('tr[data-ticker]').forEach(row => {
+          row.addEventListener('click', () => {
+            selectedTicker = row.dataset.ticker;
+            renderDetailPanel();
+            openModal(selectedTicker);
+          });
+        });
+      };
+
+      const buildSparkline = (values, color) => {
+        const max = Math.max(...values);
+        const min = Math.min(...values);
+        const stepX = 100 / (values.length - 1);
+        const points = values.map((v, i) => {
+          const x = i * stepX;
+          const y = 100 - ((v - min) / (max - min || 1)) * 70 - 15;
+          return `${x},${y}`;
+        }).join(' ');
+
+        return `
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Trend chart">
+            <defs>
+              <linearGradient id="grad-${color.replace('#', '')}" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="${color}" stop-opacity="0.38"></stop>
+                <stop offset="100%" stop-color="${color}" stop-opacity="0.08"></stop>
+              </linearGradient>
+            </defs>
+            <path d="M 0 90 L ${points} L 100 90 Z" fill="url(#grad-${color.replace('#', '')})" opacity="0.35"></path>
+            <polyline
+              points="${points}"
+              fill="none"
+              stroke="${color}"
+              stroke-width="2.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></polyline>
+          </svg>
+        `;
+      };
+
+      const renderDetailPanel = () => {
+        const filtered = getFilteredStocks();
+        const target = filtered.find(stock => stock.ticker === selectedTicker) || filtered[0] || stocks[0];
+        if (!target) {
+          detailPanel.innerHTML = '';
+          return;
+        }
+
+        const chartValues = Array.isArray(target.chartValues) && target.chartValues.length ? target.chartValues : target.pattern;
+        const changeText = target.change || '+0.00%';
+        const color = target.change && Number.parseFloat(target.change) < 0 ? '#ff5d73' : '#2ad48d';
+
+        detailPanel.innerHTML = `
+          <div class="detail-header">
+            <div>
+              <div class="pill">차트분석자료</div>
+              <h2>${target.name} (${target.ticker})</h2>
+            </div>
+            <div class="detail-price">
+              <strong>${target.price}</strong>
+              <span class="status ${target.statusClass}" style="margin-top: 8px; display: inline-flex;">${changeText}</span>
+            </div>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-chart">
+              <canvas id="focusChart" height="220"></canvas>
+            </div>
+            <div class="detail-summary">
+              <h3>분석 포인트</h3>
+              <ul>
+                ${target.notes.map(note => `<li>${note}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        `;
+
+        if (window.Chart) {
+          const ctx = document.getElementById('focusChart');
+          if (ctx) {
+            new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: chartValues.map((_, i) => `${i + 1}d`),
+                datasets: [{
+                  label: target.ticker,
+                  data: chartValues,
+                  borderColor: color,
+                  backgroundColor: 'rgba(102, 168, 255, 0.12)',
+                  borderWidth: 3,
+                  fill: true,
+                  tension: 0.35,
+                  pointRadius: 0
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { ticks: { display: false }, grid: { display: false } },
+                  y: { display: false, grid: { display: false } }
+                }
+              }
+            });
+          }
+        }
+      };
+
+      const renderAnalysis = (items) => {
+        if (!items.length) {
+          analysisGrid.innerHTML = `
+            <div class="card" style="grid-column: 1 / -1; text-align: center;">
+              <h3 style="margin: 0 0 8px;">검색 결과가 없습니다</h3>
+              <p class="lead" style="margin: 0;">다른 종목명이나 티커로 다시 검색해 보세요.</p>
+            </div>
+          `;
+          return;
+        }
+
+        analysisGrid.innerHTML = items.map(stock => `
+          <article class="card" data-ticker="${stock.ticker}" style="cursor:pointer;">
+            <div class="card-header">
+              <div class="company">
+                <div class="company-mark">${stock.ticker.slice(0, 2)}</div>
+                <div class="company-name">
+                  ${stock.name}
+                  <small>${stock.ticker}</small>
+                </div>
+              </div>
+              <div class="price-box">
+                <div class="price">${stock.price}</div>
+                <div class="change">${stock.change}</div>
+              </div>
+            </div>
+
+            <div class="chart-box">
+              ${buildSparkline(stock.pattern, stock.color)}
+            </div>
+
+            <p class="lead" style="margin: 0 0 12px;">${stock.summary}</p>
+            <ul class="analysis-list">
+              ${stock.notes.map(note => `<li>${note}</li>`).join('')}
+            </ul>
+
+            <div class="actions">
+              <span class="tag">${stock.marketCap}</span>
+              <a class="button" href="https://www.google.com/finance/quote/${stock.ticker}:${stock.exchange}" target="_blank" rel="noreferrer">
+                Google Finance 열기
+              </a>
+            </div>
+          </article>
+        `).join('');
+
+        analysisGrid.querySelectorAll('[data-ticker]').forEach(card => {
+          card.addEventListener('click', (event) => {
+            if (event.target.closest('a')) return;
+            selectedTicker = card.dataset.ticker;
+            renderDetailPanel();
+            openModal(selectedTicker);
+          });
+        });
+      };
+
+      const openModal = (ticker) => {
+        const stock = stocks.find(item => item.ticker === ticker) || stocks[0];
+        if (!stock) return;
+
+        modalTitle.textContent = `${stock.name} (${stock.ticker})`;
+        modalPrice.textContent = stock.price;
+        modalChange.textContent = stock.change;
+        modalMarketcap.textContent = stock.marketCap;
+        modalSector.textContent = stock.sector;
+        modalStatus.textContent = stock.status;
+        modalSummary.textContent = stock.summary;
+        modalChange.className = `status ${stock.statusClass}`;
+
+        const modalChartValues = Array.isArray(stock.chartValues) && stock.chartValues.length ? stock.chartValues : stock.pattern;
+        if (window.Chart) {
+          const ctx = document.getElementById('modal-chart');
+          if (ctx) {
+            if (ctx.chartInstance) {
+              ctx.chartInstance.destroy();
+            }
+            ctx.chartInstance = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: modalChartValues.map((_, i) => `${i + 1}d`),
+                datasets: [{
+                  label: stock.ticker,
+                  data: modalChartValues,
+                  borderColor: stock.color,
+                  backgroundColor: 'rgba(102, 168, 255, 0.12)',
+                  borderWidth: 3,
+                  fill: true,
+                  tension: 0.35,
+                  pointRadius: 0
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { ticks: { display: false }, grid: { display: false } },
+                  y: { display: false, grid: { display: false } }
+                }
+              }
+            });
+          }
+        }
+
+        modal.classList.add('visible');
+      };
+
+      const closeModal = () => {
+        modal.classList.remove('visible');
+      };
+
+      const renderComparisonTable = (items) => {
+        const compareTable = document.getElementById('compare-table');
+        compareTable.innerHTML = items.slice(0, 5).map((stock, idx) => `
+          <tr>
+            <td>#${idx + 1}</td>
+            <td>${stock.name}</td>
+            <td>${stock.price}</td>
+            <td>${stock.change}</td>
+            <td><span class="status ${stock.statusClass}">${stock.status}</span></td>
+          </tr>
+        `).join('');
+      };
+
+      const renderNews = () => {
+        const newsArea = document.getElementById('news-grid');
+        newsArea.innerHTML = marketNews.map(item => `
+          <article class="news-card">
+            <span class="news-tag">${item.tag}</span>
+            <h4>${item.title}</h4>
+            <p>${item.text}</p>
+          </article>
+        `).join('');
+      };
+
+      const renderPage = () => {
+        const filtered = getFilteredStocks();
+        if (!filtered.some(stock => stock.ticker === selectedTicker)) {
+          selectedTicker = filtered[0]?.ticker || stocks[0].ticker;
+        }
+        renderTable(filtered);
+        renderAnalysis(filtered);
+        renderComparisonTable(filtered);
+        renderDetailPanel();
+        updateMeta(filtered);
+      };
+
+      const fetchQuote = async (symbol) => {
+        const fallback = stocks.find(stock => stock.ticker === symbol) || { price: '$0.00', change: '+0.00%', pattern: [10, 12, 11, 14, 13, 15] };
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1mo&interval=1d`;
+
+        try {
+          const response = await fetch(url, { mode: 'cors' });
+          if (!response.ok) throw new Error('Failed');
+          const data = await response.json();
+          const result = data?.chart?.result?.[0];
+          const meta = result?.meta || {};
+          const quote = result?.indicators?.quote?.[0];
+          const closes = (quote?.close || []).filter(v => Number.isFinite(v));
+          const last = closes[closes.length - 1] ?? Number.parseFloat(fallback.price.replace(/[$,]/g, ''));
+          const prev = closes[closes.length - 2] ?? last;
+          const pct = meta.regularMarketChangePercent ?? ((last - prev) / (prev || 1)) * 100;
+
+          return {
+            price: `$${Number(last).toFixed(2)}`,
+            change: `${pct >= 0 ? '+' : ''}${Number(pct).toFixed(2)}%`,
+            chartValues: closes.slice(-20),
+            statusClass: pct >= 0 ? 'up' : 'down',
+            status: pct >= 0 ? '강세 유지' : '조정'
+          };
+        } catch (error) {
+          return {
+            price: fallback.price,
+            change: fallback.change,
+            chartValues: fallback.pattern,
+            statusClass: fallback.statusClass,
+            status: fallback.status
+          };
+        }
+      };
+
+      async function hydrateQuotes() {
+        try {
+          const response = await fetch('/api/quotes?symbols=' + stocks.map(item => item.ticker).join(','));
+          const payload = await response.json();
+
+          if (payload && Array.isArray(payload.items)) {
+            payload.items.forEach(item => {
+              const match = stocks.find(stock => stock.ticker === item.symbol);
+              if (match) {
+                Object.assign(match, {
+                  price: `$${Number(item.price || 0).toFixed(2)}`,
+                  change: `${item.changeValue >= 0 ? '+' : ''}${Number(item.changeValue || 0).toFixed(2)}%`,
+                  chartValues: item.chart || match.pattern,
+                  statusClass: item.changeValue >= 0 ? 'up' : 'down',
+                  status: item.changeValue >= 0 ? '강세 유지' : '조정',
+                  summary: match.summary
+                });
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Quote hydration failed:', error);
+        }
+
+        renderPage();
+      }
+
+      searchInput.addEventListener('input', renderPage);
+      refreshBtn.addEventListener('click', hydrateQuotes);
+      modalClose.addEventListener('click', closeModal);
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+      renderFilters();
+      renderNews();
+      renderPage();
+      hydrateQuotes();
+    </script>
+  </body>
+</html>
