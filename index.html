@@ -402,6 +402,37 @@
 
       .status.up { background: rgba(42,212,141,0.13); color: var(--green); }
       .status.down { background: rgba(255,93,115,0.12); color: var(--red); }
+      .status.watch { background: rgba(255,184,77,0.12); color: var(--amber); }
+
+      .signal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        border: 1px solid transparent;
+      }
+
+      .signal-badge.buy {
+        background: rgba(42,212,141,0.12);
+        border-color: rgba(42,212,141,0.25);
+        color: var(--green);
+      }
+
+      .signal-badge.watch {
+        background: rgba(255,184,77,0.12);
+        border-color: rgba(255,184,77,0.25);
+        color: var(--amber);
+      }
+
+      .signal-badge.sell {
+        background: rgba(255,93,115,0.12);
+        border-color: rgba(255,93,115,0.25);
+        color: var(--red);
+      }
 
       .analysis-grid {
         margin-top: 32px;
@@ -712,7 +743,7 @@
       svg {
         display: block;
         width: 100%;
-        height: 130px;
+        height: 92px;
       }
 
       .analysis-list {
@@ -761,6 +792,79 @@
         border-radius: 999px;
         font-size: 11px;
         font-weight: 700;
+      }
+
+      .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .meta-row .score {
+        color: var(--text);
+        font-weight: 700;
+      }
+
+      .priority-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(102,168,255,0.2);
+        background: rgba(102,168,255,0.06);
+      }
+
+      .priority-box .label {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .priority-box .value {
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .action-box {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+      }
+
+      .action-box .title {
+        margin: 0 0 8px;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .action-box ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+      }
+
+      .action-box li {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .action-box li strong {
+        color: var(--text);
       }
 
       a.button {
@@ -1950,7 +2054,11 @@
             <td>${stock.sector}</td>
             <td>${stock.marketCap}</td>
             <td>${stock.return}</td>
-            <td><span class="status ${stock.statusClass}">${stock.status}</span></td>
+            <td>
+              <span class="signal-badge ${stock.statusClass === 'up' ? 'buy' : stock.statusClass === 'down' ? 'sell' : 'watch'}">
+                ${stock.statusClass === 'up' ? '매수' : stock.statusClass === 'down' ? '매도' : '관망'}
+              </span>
+            </td>
           </tr>
         `).join('');
 
@@ -1974,11 +2082,11 @@
 
         const bars = values.map((value, index) => {
           const normalized = (value - min) / range;
-          const barHeight = Math.max(6, normalized * 82);
+          const barHeight = Math.max(4, normalized * 50);
           const x = gutter + index * (barWidth + gutter);
-          const y = height - barHeight - 8;
+          const y = height - barHeight - 20;
           const fill = value >= 0 ? 'rgba(42,212,141,0.85)' : 'rgba(255,93,115,0.8)';
-          return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="3" fill="${fill}" opacity="0.9"></rect>`;
+          return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${fill}" opacity="0.9"></rect>`;
         }).join('');
 
         return `
@@ -2045,8 +2153,8 @@
                   backgroundColor: chartValues.map(value => value >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
                   borderColor: chartValues.map(value => value >= 0 ? '#2ad48d' : '#ff5d73'),
                   borderWidth: 1,
-                  borderRadius: 4,
-                  maxBarThickness: 12
+                  borderRadius: 3,
+                  maxBarThickness: 10
                 }]
               },
               options: {
@@ -2090,6 +2198,12 @@
               </div>
             </div>
 
+            <div style="margin-bottom: 12px;">
+              <span class="signal-badge ${stock.statusClass === 'up' ? 'buy' : stock.statusClass === 'down' ? 'sell' : 'watch'}">
+                ${stock.statusClass === 'up' ? '매수 신호' : stock.statusClass === 'down' ? '매도 신호' : '관망'}
+              </span>
+            </div>
+
             <div class="chart-box">
               ${buildSparkline(stock.pattern, stock.color)}
             </div>
@@ -2104,6 +2218,21 @@
               <a class="button" href="https://www.google.com/finance/quote/${stock.ticker}:${stock.exchange}" target="_blank" rel="noreferrer">
                 Google Finance 열기
               </a>
+            </div>
+            <div class="meta-row">
+              <span>상대강도</span>
+              <span class="score">${stock.statusClass === 'up' ? '강세' : '약세'} · ${(Number.parseFloat((stock.return || '0%').replace('%', '')) || 0).toFixed(1)}%</span>
+            </div>
+            <div class="priority-box">
+              <span class="label">우선순위</span>
+              <span class="value">${Math.max(1, Math.min(10, Math.round(Math.abs((Number.parseFloat((stock.return || '0%').replace('%', '')) || 0) / 2) + 5)))}</span>
+            </div>
+            <div class="action-box">
+              <p class="title">실행 포인트</p>
+              <ul>
+                <li><strong>매수:</strong> ${stock.statusClass === 'up' ? '지지선에서 누적 매수' : '고점 회피 후 분할 매수'}</li>
+                <li><strong>리스크:</strong> ${stock.statusClass === 'down' ? '급등 후 조정 압력' : '수익률 과열 여부 확인'}</li>
+              </ul>
             </div>
           </article>
         `).join('');
@@ -2148,8 +2277,8 @@
                   backgroundColor: modalChartValues.map(value => value >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
                   borderColor: modalChartValues.map(value => value >= 0 ? '#2ad48d' : '#ff5d73'),
                   borderWidth: 1,
-                  borderRadius: 4,
-                  maxBarThickness: 12
+                  borderRadius: 3,
+                  maxBarThickness: 10
                 }]
               },
               options: {
@@ -2235,7 +2364,10 @@
         compareTable.innerHTML = items.slice(0, 5).map((stock, idx) => `
           <tr>
             <td>#${idx + 1}</td>
-            <td>${stock.name}</td>
+            <td>
+              <div class="ticker">${stock.name}</div>
+              <div class="subtext">${stock.ticker}</div>
+            </td>
             <td>${stock.price}</td>
             <td>${stock.change}</td>
             <td><span class="status ${stock.statusClass}">${stock.status}</span></td>
