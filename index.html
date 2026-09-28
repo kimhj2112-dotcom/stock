@@ -2189,7 +2189,7 @@
             ctx.chartInstance = new Chart(ctx, {
               type: 'line',
               data: {
-                labels: chartValues.map((_, i) => `${i + 1}d`),
+                labels: (target.chartLabels?.length === chartValues.length ? target.chartLabels : chartValues.map((_, i) => `${i + 1}일차`)),
                 datasets: [{
                   label: target.ticker,
                   data: chartValues,
@@ -2207,7 +2207,7 @@
                 animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                  x: { ticks: { display: false }, grid: { display: false } },
+                  x: { ticks: { display: true, color: '#a8b4d0', maxTicksLimit: 6 }, grid: { display: false } },
                   y: {
                     display: false,
                     grid: { display: false },
@@ -2321,7 +2321,7 @@
             ctx.chartInstance = new Chart(ctx, {
               type: 'line',
               data: {
-                labels: modalChartValues.map((_, i) => `${i + 1}d`),
+                labels: (stock.chartLabels?.length === modalChartValues.length ? stock.chartLabels : modalChartValues.map((_, i) => `${i + 1}일차`)),
                 datasets: [{
                   label: stock.ticker,
                   data: modalChartValues,
@@ -2339,7 +2339,7 @@
                 animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                  x: { ticks: { display: false }, grid: { display: false } },
+                  x: { ticks: { display: true, color: '#a8b4d0', maxTicksLimit: 6 }, grid: { display: false } },
                   y: {
                     display: false,
                     grid: { display: false },
@@ -2513,6 +2513,7 @@
                   price: `$${Number(item.price || 0).toFixed(2)}`,
                   change: `${item.changeValue >= 0 ? '+' : ''}${Number(item.changeValue || 0).toFixed(2)}%`,
                   chartValues: item.chart || match.pattern,
+                  chartLabels: item.chartLabels || [],
                   statusClass: item.changeValue >= 0 ? 'up' : 'down',
                   status: item.changeValue >= 0 ? '강세 유지' : '조정',
                   summary: match.summary

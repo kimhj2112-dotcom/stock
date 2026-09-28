@@ -34,7 +34,14 @@ async function fetchQuoteFromYahoo(symbol) {
 
   const meta = result.meta || {};
   const quote = result.indicators?.quote?.[0];
-  const closes = (quote?.close || []).filter(v => Number.isFinite(v));
+  const timestamps = result.timestamp || [];
+  const closes = [];
+  const dates = [];
+  (quote?.close || []).forEach((value, index) => {
+    if (!Number.isFinite(value)) return;
+    closes.push(value);
+    dates.push(new Date((timestamps[index] || 0) * 1000).toISOString().slice(0, 10));
+  });
 
   if (!closes.length) {
     throw new Error(`No close data found for ${symbol}`);
@@ -51,6 +58,7 @@ async function fetchQuoteFromYahoo(symbol) {
     change: `${pct >= 0 ? '+' : ''}${Number(pct).toFixed(2)}%`,
     changeValue: Number(pct),
     chart: closes.slice(-20),
+    chartLabels: dates.slice(-20),
     marketState: meta.marketState || 'CLOSED'
   };
 }
