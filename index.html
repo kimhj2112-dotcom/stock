@@ -438,7 +438,7 @@
         margin-top: 32px;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
+        gap: 16px;
       }
 
       .detail-panel {
@@ -649,9 +649,9 @@
       .card {
         background: linear-gradient(180deg, rgba(18,26,43,0.95), rgba(13,18,31,0.9));
         border: 1px solid var(--line);
-        border-radius: 22px;
-        padding: 18px 18px 16px;
-        box-shadow: 0 16px 35px rgba(0,0,0,0.15);
+        border-radius: 20px;
+        padding: 16px 16px 14px;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.12);
       }
 
       .card-header {
@@ -659,7 +659,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
       }
 
       .company {
@@ -707,11 +707,11 @@
       }
 
       .chart-box {
-        border-radius: 16px;
+        border-radius: 14px;
         overflow: hidden;
         border: 1px solid var(--line);
         background: rgba(255,255,255,0.015);
-        margin-bottom: 14px;
+        margin-bottom: 12px;
       }
 
       .chart-legend {
@@ -743,7 +743,7 @@
       svg {
         display: block;
         width: 100%;
-        height: 92px;
+        height: 72px;
       }
 
       .analysis-list {
@@ -773,7 +773,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 12px;
-        margin-top: 14px;
+        margin-top: 12px;
       }
 
       .sector-compare {
@@ -2082,9 +2082,9 @@
 
         const bars = values.map((value, index) => {
           const normalized = (value - min) / range;
-          const barHeight = Math.max(4, normalized * 50);
+          const barHeight = Math.max(3, normalized * 38);
           const x = gutter + index * (barWidth + gutter);
-          const y = height - barHeight - 20;
+          const y = height - barHeight - 26;
           const fill = value >= 0 ? 'rgba(42,212,141,0.85)' : 'rgba(255,93,115,0.8)';
           return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${fill}" opacity="0.9"></rect>`;
         }).join('');
@@ -2153,8 +2153,8 @@
                   backgroundColor: chartValues.map(value => value >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
                   borderColor: chartValues.map(value => value >= 0 ? '#2ad48d' : '#ff5d73'),
                   borderWidth: 1,
-                  borderRadius: 3,
-                  maxBarThickness: 10
+                  borderRadius: 2,
+                  maxBarThickness: 8
                 }]
               },
               options: {
@@ -2277,8 +2277,8 @@
                   backgroundColor: modalChartValues.map(value => value >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
                   borderColor: modalChartValues.map(value => value >= 0 ? '#2ad48d' : '#ff5d73'),
                   borderWidth: 1,
-                  borderRadius: 3,
-                  maxBarThickness: 10
+                  borderRadius: 2,
+                  maxBarThickness: 8
                 }]
               },
               options: {
