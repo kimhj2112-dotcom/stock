@@ -199,6 +199,21 @@
         border: 1px solid var(--line);
         border-radius: 16px;
         padding: 16px;
+        cursor: pointer;
+        transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .signal-card:hover,
+      .signal-card:focus-visible {
+        transform: translateY(-1px);
+        border-color: rgba(102,168,255,0.52);
+        box-shadow: 0 10px 24px rgba(16,28,44,0.25);
+        outline: none;
+      }
+
+      .signal-card.active {
+        border-color: rgba(102,168,255,0.7);
+        box-shadow: inset 0 0 0 1px rgba(102,168,255,0.35), 0 10px 24px rgba(16,28,44,0.25);
       }
 
       .signal-card h4 {
@@ -760,17 +775,17 @@
       </div>
 
       <div class="signal-row">
-        <div class="signal-card">
+        <div class="signal-card" data-signal="buy" tabindex="0" role="button" aria-label="매수 신호 종목 보기">
           <h4>매수 신호</h4>
           <div class="large" id="buy-signal">3</div>
           <div class="note">지지 확인 중</div>
         </div>
-        <div class="signal-card">
+        <div class="signal-card" data-signal="watch" tabindex="0" role="button" aria-label="관망 종목 보기">
           <h4>관망</h4>
           <div class="large" id="watch-signal">4</div>
           <div class="note">리스크 점검</div>
         </div>
-        <div class="signal-card">
+        <div class="signal-card" data-signal="sell" tabindex="0" role="button" aria-label="매도 신호 종목 보기">
           <h4>매도 신호</h4>
           <div class="large" id="sell-signal">3</div>
           <div class="note">차익실현</div>
@@ -1659,7 +1674,30 @@
       ];
 
       let activeFilter = 'all';
+      let activeSignal = null;
       let selectedTicker = 'MSFT';
+
+      const syncSignalCards = () => {
+        document.querySelectorAll('.signal-card[data-signal]').forEach(card => {
+          const isActive = card.dataset.signal === activeSignal;
+          card.classList.toggle('active', isActive);
+          card.setAttribute('aria-pressed', String(isActive));
+        });
+      };
+
+      const getFilteredStocks = () => {
+        const q = searchInput.value.trim().toLowerCase();
+        return stocks.filter(stock => {
+          const matchesFilter = activeFilter === 'all' || stock.category === activeFilter;
+          const matchesSearch = !q || stock.name.toLowerCase().includes(q) || stock.ticker.toLowerCase().includes(q);
+          const matchesSignal = !activeSignal || (
+            activeSignal === 'buy' ? stock.statusClass === 'up' :
+            activeSignal === 'sell' ? stock.statusClass === 'down' :
+            activeSignal === 'watch' ? stock.statusClass !== 'up' && stock.statusClass !== 'down' : true
+          );
+          return matchesFilter && matchesSearch && matchesSignal;
+        });
+      };
 
       const updateMeta = (items) => {
         const bullish = items.filter(item => item.statusClass === 'up').length;
@@ -1699,15 +1737,6 @@
 
         const now = new Date();
         lastRefreshEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      };
-
-      const getFilteredStocks = () => {
-        const q = searchInput.value.trim().toLowerCase();
-        return stocks.filter(stock => {
-          const matchesFilter = activeFilter === 'all' || stock.category === activeFilter;
-          const matchesSearch = !q || stock.name.toLowerCase().includes(q) || stock.ticker.toLowerCase().includes(q);
-          return matchesFilter && matchesSearch;
-        });
       };
 
       const renderFilters = () => {
@@ -1993,6 +2022,7 @@
         renderComparisonTable(filtered);
         renderDetailPanel();
         updateMeta(filtered);
+        syncSignalCards();
       };
 
       const fetchQuote = async (symbol) => {
@@ -2055,6 +2085,22 @@
 
         renderPage();
       }
+
+      document.querySelectorAll('.signal-card[data-signal]').forEach(card => {
+        const handleSignalClick = () => {
+          const value = card.dataset.signal;
+          activeSignal = activeSignal === value ? null : value;
+          renderPage();
+        };
+
+        card.addEventListener('click', handleSignalClick);
+        card.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleSignalClick();
+          }
+        });
+      });
 
       searchInput.addEventListener('input', renderPage);
       refreshBtn.addEventListener('click', hydrateQuotes);
