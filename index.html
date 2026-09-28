@@ -2071,37 +2071,33 @@
         });
       };
 
-      const compactBarValues = (values) => {
+      const buildSparkline = (values, color) => {
         const safeValues = values.filter(value => Number.isFinite(value));
-        if (!safeValues.length) return values;
+        if (!safeValues.length) return '';
+
         const min = Math.min(...safeValues);
         const max = Math.max(...safeValues);
         const range = max - min || 1;
-        return values.map(value => {
-          if (!Number.isFinite(value)) return 0;
-          return 4 + ((value - min) / range) * 16;
-        });
-      };
-
-      const buildSparkline = (values, color) => {
-        const compactValues = compactBarValues(values);
         const width = 100;
         const height = 100;
-        const gutter = 8;
-        const barWidth = (width - gutter * (compactValues.length + 1)) / compactValues.length;
+        const padding = 10;
 
-        const bars = compactValues.map((value, index) => {
-          const barHeight = Math.max(2, value);
-          const x = gutter + index * (barWidth + gutter);
-          const y = height - barHeight - 32;
-          const fill = values[index] >= 0 ? 'rgba(42,212,141,0.85)' : 'rgba(255,93,115,0.8)';
-          return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${fill}" opacity="0.9"></rect>`;
-        }).join('');
+        const points = values.map((value, index) => {
+          const x = padding + (index / Math.max(values.length - 1, 1)) * (width - padding * 2);
+          const y = height - padding - ((value - min) / range) * (height - padding * 2);
+          return `${x},${y}`;
+        }).join(' ');
 
         return `
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Bar chart">
-            <rect x="0" y="0" width="100" height="100" fill="rgba(255,255,255,0.02)"></rect>
-            ${bars}
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Line chart">
+            <polyline
+              points="${points}"
+              fill="none"
+              stroke="${color || '#66a8ff'}"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></polyline>
           </svg>
         `;
       };
@@ -2115,7 +2111,6 @@
         }
 
         const chartValues = Array.isArray(target.chartValues) && target.chartValues.length ? target.chartValues : target.pattern;
-        const compactChartValues = compactBarValues(chartValues);
         const changeText = target.change || '+0.00%';
         const color = target.change && Number.parseFloat(target.change) < 0 ? '#ff5d73' : '#2ad48d';
 
@@ -2154,17 +2149,18 @@
               ctx.chartInstance.destroy();
             }
             ctx.chartInstance = new Chart(ctx, {
-              type: 'bar',
+              type: 'line',
               data: {
                 labels: chartValues.map((_, i) => `${i + 1}d`),
                 datasets: [{
                   label: target.ticker,
-                  data: compactChartValues,
-                  backgroundColor: compactChartValues.map((value, index) => chartValues[index] >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
-                  borderColor: compactChartValues.map((value, index) => chartValues[index] >= 0 ? '#2ad48d' : '#ff5d73'),
-                  borderWidth: 1,
-                  borderRadius: 2,
-                  maxBarThickness: 8
+                  data: chartValues,
+                  borderColor: color,
+                  borderWidth: 2.5,
+                  tension: 0.28,
+                  pointRadius: 0,
+                  pointHoverRadius: 0,
+                  fill: false
                 }]
               },
               options: {
@@ -2271,7 +2267,6 @@
         modalChange.className = `status ${stock.statusClass}`;
 
         const modalChartValues = Array.isArray(stock.chartValues) && stock.chartValues.length ? stock.chartValues : stock.pattern;
-        const compactModalChartValues = compactBarValues(modalChartValues);
         if (window.Chart) {
           const ctx = document.getElementById('modal-chart');
           if (ctx) {
@@ -2279,17 +2274,18 @@
               ctx.chartInstance.destroy();
             }
             ctx.chartInstance = new Chart(ctx, {
-              type: 'bar',
+              type: 'line',
               data: {
                 labels: modalChartValues.map((_, i) => `${i + 1}d`),
                 datasets: [{
                   label: stock.ticker,
-                  data: compactModalChartValues,
-                  backgroundColor: compactModalChartValues.map((value, index) => modalChartValues[index] >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
-                  borderColor: compactModalChartValues.map((value, index) => modalChartValues[index] >= 0 ? '#2ad48d' : '#ff5d73'),
-                  borderWidth: 1,
-                  borderRadius: 2,
-                  maxBarThickness: 8
+                  data: modalChartValues,
+                  borderColor: stock.statusClass === 'up' ? '#2ad48d' : '#ff5d73',
+                  borderWidth: 2.5,
+                  tension: 0.28,
+                  pointRadius: 0,
+                  pointHoverRadius: 0,
+                  fill: false
                 }]
               },
               options: {
@@ -2329,7 +2325,6 @@
           if (!matches.length) return 0;
           return matches.reduce((total, stock) => total + (Number.parseFloat((stock.return || '0%').replace('%', '')) || 0), 0) / matches.length;
         });
-        const compactSectorValues = compactBarValues(values);
 
         if (sectorChartCanvas.chartInstance) {
           sectorChartCanvas.chartInstance.destroy();
@@ -2341,11 +2336,13 @@
             labels,
             datasets: [{
               label: '평균 수익률',
-              data: compactSectorValues,
-              backgroundColor: Object.values(sectorMap).map(item => item.color),
-              borderRadius: 8,
-              borderSkipped: false,
-              maxBarThickness: 18
+              data: values,
+              borderColor: '#66a8ff',
+              backgroundColor: 'rgba(102,168,255,0.18)',
+              fill: true,
+              tension: 0.35,
+              pointRadius: 0,
+              borderWidth: 2.5
             }]
           },
           options: {
