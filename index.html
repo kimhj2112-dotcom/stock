@@ -743,7 +743,7 @@
       svg {
         display: block;
         width: 100%;
-        height: 72px;
+        height: 58px;
       }
 
       .analysis-list {
@@ -2071,21 +2071,30 @@
         });
       };
 
-      const buildSparkline = (values, color) => {
-        const max = Math.max(...values);
-        const min = Math.min(...values);
+      const compactBarValues = (values) => {
+        const safeValues = values.filter(value => Number.isFinite(value));
+        if (!safeValues.length) return values;
+        const min = Math.min(...safeValues);
+        const max = Math.max(...safeValues);
         const range = max - min || 1;
+        return values.map(value => {
+          if (!Number.isFinite(value)) return 0;
+          return 4 + ((value - min) / range) * 16;
+        });
+      };
+
+      const buildSparkline = (values, color) => {
+        const compactValues = compactBarValues(values);
         const width = 100;
         const height = 100;
         const gutter = 8;
-        const barWidth = (width - gutter * (values.length + 1)) / values.length;
+        const barWidth = (width - gutter * (compactValues.length + 1)) / compactValues.length;
 
-        const bars = values.map((value, index) => {
-          const normalized = (value - min) / range;
-          const barHeight = Math.max(3, normalized * 38);
+        const bars = compactValues.map((value, index) => {
+          const barHeight = Math.max(2, value);
           const x = gutter + index * (barWidth + gutter);
-          const y = height - barHeight - 26;
-          const fill = value >= 0 ? 'rgba(42,212,141,0.85)' : 'rgba(255,93,115,0.8)';
+          const y = height - barHeight - 32;
+          const fill = values[index] >= 0 ? 'rgba(42,212,141,0.85)' : 'rgba(255,93,115,0.8)';
           return `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" fill="${fill}" opacity="0.9"></rect>`;
         }).join('');
 
@@ -2106,6 +2115,7 @@
         }
 
         const chartValues = Array.isArray(target.chartValues) && target.chartValues.length ? target.chartValues : target.pattern;
+        const compactChartValues = compactBarValues(chartValues);
         const changeText = target.change || '+0.00%';
         const color = target.change && Number.parseFloat(target.change) < 0 ? '#ff5d73' : '#2ad48d';
 
@@ -2149,9 +2159,9 @@
                 labels: chartValues.map((_, i) => `${i + 1}d`),
                 datasets: [{
                   label: target.ticker,
-                  data: chartValues,
-                  backgroundColor: chartValues.map(value => value >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
-                  borderColor: chartValues.map(value => value >= 0 ? '#2ad48d' : '#ff5d73'),
+                  data: compactChartValues,
+                  backgroundColor: compactChartValues.map((value, index) => chartValues[index] >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
+                  borderColor: compactChartValues.map((value, index) => chartValues[index] >= 0 ? '#2ad48d' : '#ff5d73'),
                   borderWidth: 1,
                   borderRadius: 2,
                   maxBarThickness: 8
@@ -2261,6 +2271,7 @@
         modalChange.className = `status ${stock.statusClass}`;
 
         const modalChartValues = Array.isArray(stock.chartValues) && stock.chartValues.length ? stock.chartValues : stock.pattern;
+        const compactModalChartValues = compactBarValues(modalChartValues);
         if (window.Chart) {
           const ctx = document.getElementById('modal-chart');
           if (ctx) {
@@ -2273,9 +2284,9 @@
                 labels: modalChartValues.map((_, i) => `${i + 1}d`),
                 datasets: [{
                   label: stock.ticker,
-                  data: modalChartValues,
-                  backgroundColor: modalChartValues.map(value => value >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
-                  borderColor: modalChartValues.map(value => value >= 0 ? '#2ad48d' : '#ff5d73'),
+                  data: compactModalChartValues,
+                  backgroundColor: compactModalChartValues.map((value, index) => modalChartValues[index] >= 0 ? 'rgba(42, 212, 141, 0.82)' : 'rgba(255, 93, 115, 0.82)'),
+                  borderColor: compactModalChartValues.map((value, index) => modalChartValues[index] >= 0 ? '#2ad48d' : '#ff5d73'),
                   borderWidth: 1,
                   borderRadius: 2,
                   maxBarThickness: 8
@@ -2318,6 +2329,7 @@
           if (!matches.length) return 0;
           return matches.reduce((total, stock) => total + (Number.parseFloat((stock.return || '0%').replace('%', '')) || 0), 0) / matches.length;
         });
+        const compactSectorValues = compactBarValues(values);
 
         if (sectorChartCanvas.chartInstance) {
           sectorChartCanvas.chartInstance.destroy();
@@ -2329,11 +2341,11 @@
             labels,
             datasets: [{
               label: '평균 수익률',
-              data: values,
+              data: compactSectorValues,
               backgroundColor: Object.values(sectorMap).map(item => item.color),
               borderRadius: 8,
               borderSkipped: false,
-              maxBarThickness: 40
+              maxBarThickness: 18
             }]
           },
           options: {
