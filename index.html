@@ -2071,6 +2071,26 @@
         });
       };
 
+      const clampChartValues = (values = []) => {
+        const numericValues = values
+          .map(value => Number(value))
+          .filter(value => Number.isFinite(value));
+
+        if (!numericValues.length) return { values: [0], min: 0, max: 1 };
+
+        const min = Math.min(...numericValues);
+        const max = Math.max(...numericValues);
+        const span = max - min || 1;
+        const paddedMin = min - span * 0.18;
+        const paddedMax = max + span * 0.18;
+
+        return {
+          values: numericValues,
+          min: paddedMin,
+          max: paddedMax
+        };
+      };
+
       const buildSparkline = (values, color) => {
         const safeValues = values.filter(value => Number.isFinite(value));
         if (!safeValues.length) return '';
@@ -2111,6 +2131,7 @@
         }
 
         const chartValues = Array.isArray(target.chartValues) && target.chartValues.length ? target.chartValues : target.pattern;
+        const { min, max } = clampChartValues(chartValues);
         const changeText = target.change || '+0.00%';
         const color = target.change && Number.parseFloat(target.change) < 0 ? '#ff5d73' : '#2ad48d';
 
@@ -2166,10 +2187,16 @@
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
                   x: { ticks: { display: false }, grid: { display: false } },
-                  y: { display: false, grid: { display: false } }
+                  y: {
+                    display: false,
+                    grid: { display: false },
+                    min,
+                    max
+                  }
                 }
               }
             });
@@ -2267,6 +2294,7 @@
         modalChange.className = `status ${stock.statusClass}`;
 
         const modalChartValues = Array.isArray(stock.chartValues) && stock.chartValues.length ? stock.chartValues : stock.pattern;
+        const { min: modalMin, max: modalMax } = clampChartValues(modalChartValues);
         if (window.Chart) {
           const ctx = document.getElementById('modal-chart');
           if (ctx) {
@@ -2291,10 +2319,16 @@
               options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
                   x: { ticks: { display: false }, grid: { display: false } },
-                  y: { display: false, grid: { display: false } }
+                  y: {
+                    display: false,
+                    grid: { display: false },
+                    min: modalMin,
+                    max: modalMax
+                  }
                 }
               }
             });
@@ -2325,13 +2359,14 @@
           if (!matches.length) return 0;
           return matches.reduce((total, stock) => total + (Number.parseFloat((stock.return || '0%').replace('%', '')) || 0), 0) / matches.length;
         });
+        const { min, max } = clampChartValues(values);
 
         if (sectorChartCanvas.chartInstance) {
           sectorChartCanvas.chartInstance.destroy();
         }
 
         sectorChartCanvas.chartInstance = new Chart(sectorChartCanvas, {
-          type: 'bar',
+          type: 'line',
           data: {
             labels,
             datasets: [{
@@ -2339,15 +2374,17 @@
               data: values,
               borderColor: '#66a8ff',
               backgroundColor: 'rgba(102,168,255,0.18)',
-              fill: true,
-              tension: 0.35,
-              pointRadius: 0,
+              fill: false,
+              tension: 0.28,
+              pointRadius: 3,
+              pointHoverRadius: 4,
               borderWidth: 2.5
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: false,
             plugins: {
               legend: { display: false }
             },
@@ -2357,6 +2394,8 @@
                 ticks: { color: '#a8b4d0' }
               },
               y: {
+                min,
+                max,
                 grid: { color: 'rgba(255,255,255,0.08)' },
                 ticks: {
                   color: '#a8b4d0',
