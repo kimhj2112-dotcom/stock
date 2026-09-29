@@ -234,60 +234,6 @@
         color: var(--muted);
       }
 
-      .sector-summary {
-        margin-top: 24px;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(180px, 1fr));
-        gap: 14px;
-      }
-
-      .sector-box {
-        background: rgba(255,255,255,0.02);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 16px;
-      }
-
-      .sector-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-      }
-
-      .sector-header strong {
-        font-size: 15px;
-      }
-
-      .sector-count {
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .sector-bar {
-        height: 10px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 999px;
-        overflow: hidden;
-        border: 1px solid var(--line);
-      }
-
-      .sector-bar > span {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: linear-gradient(90deg, #66a8ff, #2ad48d);
-      }
-
-      .sector-meta {
-        margin-top: 10px;
-        display: flex;
-        justify-content: space-between;
-        color: var(--muted);
-        font-size: 12px;
-      }
-
       .toolbar {
         margin-top: 24px;
         display: flex;
@@ -731,32 +677,6 @@
         margin-bottom: 12px;
       }
 
-      .chart-legend {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 12px;
-        margin-top: 12px;
-        color: var(--muted);
-        font-size: 12px;
-      }
-
-      .legend-item {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .legend-swatch {
-        width: 10px;
-        height: 10px;
-        border-radius: 3px;
-        display: inline-block;
-      }
-
-      .legend-swatch.up { background: rgba(42,212,141,0.9); }
-      .legend-swatch.down { background: rgba(255,93,115,0.9); }
-
       svg {
         display: block;
         width: 100%;
@@ -791,14 +711,6 @@
         align-items: center;
         gap: 12px;
         margin-top: 12px;
-      }
-
-      .sector-compare {
-        margin-top: 28px;
-        background: linear-gradient(180deg, rgba(18,26,43,0.95), rgba(13,18,31,0.9));
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        padding: 22px;
       }
 
       .tag {
@@ -1001,8 +913,6 @@
         </div>
       </div>
 
-      <div class="sector-summary" id="sector-summary"></div>
-
       <div class="toolbar">
         <div class="toolbar-left">
           <div class="search-box">
@@ -1011,14 +921,6 @@
           <div class="filter-group" id="filter-group"></div>
         </div>
         <div class="toolbar-right">
-          <label class="sort-box" aria-label="종목 정렬">
-            <select id="sort-select">
-              <option value="marketCap">시총순</option>
-              <option value="return">수익률순</option>
-              <option value="ticker">티커순</option>
-              <option value="status">상태순</option>
-            </select>
-          </label>
           <button class="action-btn" id="refresh-btn" type="button">새로고침</button>
           <span class="subtext">실시간 감시 기준: Google Finance</span>
         </div>
@@ -1042,14 +944,6 @@
 
       <section class="analysis-grid" id="analysis-grid"></section>
       <section class="detail-panel" id="detail-panel"></section>
-
-      <section class="sector-compare" id="sector-compare">
-        <div class="panel-header">
-          <h3>섹터 비교</h3>
-          <span class="subtext">현재 필터 기준 평균 수익률</span>
-        </div>
-        <div class="sector-chart-canvas"><canvas id="sectorChart"></canvas></div>
-      </section>
 
       <section class="table-wrap" style="margin-top: 28px;">
         <table>
@@ -1076,10 +970,6 @@
             <div class="modal-grid">
               <div>
                 <div class="modal-chart-canvas"><canvas id="modal-chart"></canvas></div>
-                <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-swatch up"></span>강세</span>
-                  <span class="legend-item"><span class="legend-swatch down"></span>약세</span>
-                </div>
               </div>
               <div>
                 <div class="detail-price" style="text-align:left;">
@@ -1850,7 +1740,6 @@
       const detailPanel = document.getElementById('detail-panel');
       const searchInput = document.getElementById('stock-search');
       const filterGroup = document.getElementById('filter-group');
-      const sortSelect = document.getElementById('sort-select');
       const refreshBtn = document.getElementById('refresh-btn');
       const lastRefreshEl = document.getElementById('last-refresh');
       const summaryCountEl = document.getElementById('summary-count');
@@ -1873,7 +1762,6 @@
       const modalSector = document.getElementById('modal-sector');
       const modalStatus = document.getElementById('modal-status');
       const modalSummary = document.getElementById('modal-summary');
-      const sectorChartCanvas = document.getElementById('sectorChart');
 
       const marketNews = [
         {
@@ -1918,41 +1806,9 @@
         });
       };
 
-      const parseMarketCap = (value = '$0') => {
-        const cleaned = String(value).replace(/[$,]/g, '').replace(/\s+/g, '');
-        if (!cleaned || cleaned === 'N/A') return 0;
-        const units = { T: 1_000_000_000_000, B: 1_000_000_000, M: 1_000_000, K: 1_000 };
-        const match = cleaned.match(/([\d.]+)([TMBK]?)/i);
-        if (!match) return Number.parseFloat(cleaned) || 0;
-        const numeric = Number.parseFloat(match[1]);
-        const unit = match[2].toUpperCase();
-        return numeric * (units[unit] || 1);
-      };
-
-      const sortStocks = (items) => {
-        const direction = (sortSelect && sortSelect.value) || 'marketCap';
-        return [...items].sort((a, b) => {
-          switch (direction) {
-            case 'return': {
-              const diff = (Number.parseFloat((b.return || '0%').replace('%', '')) || 0) - (Number.parseFloat((a.return || '0%').replace('%', '')) || 0);
-              return diff || a.ticker.localeCompare(b.ticker);
-            }
-            case 'ticker':
-              return a.ticker.localeCompare(b.ticker);
-            case 'status': {
-              const statusOrder = { up: 1, down: 0 };
-              return (statusOrder[b.statusClass] || 0) - (statusOrder[a.statusClass] || 0) || a.ticker.localeCompare(b.ticker);
-            }
-            case 'marketCap':
-            default:
-              return parseMarketCap(b.marketCap) - parseMarketCap(a.marketCap) || a.ticker.localeCompare(b.ticker);
-          }
-        });
-      };
-
       const getFilteredStocks = () => {
         const q = searchInput.value.trim().toLowerCase();
-        return sortStocks(stocks.filter(stock => {
+        return stocks.filter(stock => {
           const matchesFilter = activeFilter === 'all' || stock.category === activeFilter;
           const matchesSearch = !q || stock.name.toLowerCase().includes(q) || stock.ticker.toLowerCase().includes(q);
           const matchesSignal = !activeSignal || (
@@ -1961,7 +1817,7 @@
             activeSignal === 'watch' ? stock.statusClass !== 'up' && stock.statusClass !== 'down' : true
           );
           return matchesFilter && matchesSearch && matchesSignal;
-        }));
+        });
       };
 
       const updateMeta = (items) => {
@@ -2018,46 +1874,6 @@
             renderPage();
           });
         });
-      };
-
-      const renderSectorSummary = () => {
-        const sectorMap = {
-          cloud: { label: '클라우드', color: '#66a8ff' },
-          growth: { label: '성장주', color: '#2ad48d' },
-          semis: { label: '반도체', color: '#ffb84d' },
-          software: { label: '소프트웨어', color: '#a88cff' }
-        };
-
-        const entries = Object.entries(sectorMap).map(([key, value]) => {
-          const items = stocks.filter(stock => stock.category === key);
-          const avgReturn = items.length
-            ? items.reduce((total, item) => total + (Number.parseFloat((item.return || '0%').replace('%', '')) || 0), 0) / items.length
-            : 0;
-          return { key, ...value, count: items.length, avgReturn };
-        });
-
-        const maxCount = Math.max(...entries.map(item => item.count), 1);
-        const summaryEl = document.getElementById('sector-summary');
-        if (!summaryEl) return;
-
-        summaryEl.innerHTML = entries.map(item => {
-          const width = (item.count / maxCount) * 100;
-          const avg = `${item.avgReturn >= 0 ? '+' : ''}${item.avgReturn.toFixed(1)}%`;
-
-          return `
-            <div class="sector-box">
-              <div class="sector-header">
-                <strong>${item.label}</strong>
-                <span class="sector-count">${item.count}종목</span>
-              </div>
-              <div class="sector-bar"><span style="width:${width}%; background: linear-gradient(90deg, ${item.color}, #8fe3ff);"></span></div>
-              <div class="sector-meta">
-                <span>평균수익률</span>
-                <strong>${avg}</strong>
-              </div>
-            </div>
-          `;
-        }).join('');
       };
 
       const renderTable = (items) => {
@@ -2166,10 +1982,6 @@
           <div class="detail-grid">
             <div class="detail-chart">
               <div class="detail-chart-canvas"><canvas id="focusChart"></canvas></div>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-swatch up"></span>강세</span>
-                <span class="legend-item"><span class="legend-swatch down"></span>약세</span>
-              </div>
             </div>
             <div class="detail-summary">
               <h3>분석 포인트</h3>
@@ -2359,71 +2171,6 @@
         modal.classList.remove('visible');
       };
 
-      const renderSectorChart = (items) => {
-        if (!window.Chart || !sectorChartCanvas) return;
-
-        const sectorMap = {
-          cloud: { label: '클라우드', color: '#66a8ff' },
-          growth: { label: '성장주', color: '#2ad48d' },
-          semis: { label: '반도체', color: '#ffb84d' },
-          software: { label: '소프트웨어', color: '#a88cff' }
-        };
-
-        const labels = Object.keys(sectorMap).map(key => sectorMap[key].label);
-        const values = labels.map((label, idx) => {
-          const key = Object.keys(sectorMap)[idx];
-          const matches = items.filter(stock => stock.category === key);
-          if (!matches.length) return 0;
-          return matches.reduce((total, stock) => total + (Number.parseFloat((stock.return || '0%').replace('%', '')) || 0), 0) / matches.length;
-        });
-        const { min, max } = clampChartValues(values);
-
-        if (sectorChartCanvas.chartInstance) {
-          sectorChartCanvas.chartInstance.destroy();
-        }
-
-        sectorChartCanvas.chartInstance = new Chart(sectorChartCanvas, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: '평균 수익률',
-              data: values,
-              borderColor: '#66a8ff',
-              backgroundColor: 'rgba(102,168,255,0.18)',
-              fill: false,
-              tension: 0.28,
-              pointRadius: 3,
-              pointHoverRadius: 4,
-              borderWidth: 2.5
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: {
-              legend: { display: false }
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { color: '#a8b4d0' }
-              },
-              y: {
-                min,
-                max,
-                grid: { color: 'rgba(255,255,255,0.08)' },
-                ticks: {
-                  color: '#a8b4d0',
-                  callback: value => `${value > 0 ? '+' : ''}${value}%`
-                }
-              }
-            }
-          }
-        });
-      };
-
       const renderComparisonTable = (items) => {
         const compareTable = document.getElementById('compare-table');
         compareTable.innerHTML = items.slice(0, 5).map((stock, idx) => `
@@ -2460,10 +2207,8 @@
         renderAnalysis(filtered);
         renderComparisonTable(filtered);
         renderDetailPanel();
-        renderSectorChart(filtered);
         updateMeta(filtered);
         syncSignalCards();
-        renderSectorSummary();
       };
 
       const fetchQuote = async (symbol) => {
@@ -2545,7 +2290,6 @@
       });
 
       searchInput.addEventListener('input', renderPage);
-      sortSelect.addEventListener('change', renderPage);
       refreshBtn.addEventListener('click', hydrateQuotes);
       modalClose.addEventListener('click', closeModal);
       modal.addEventListener('click', (event) => {
