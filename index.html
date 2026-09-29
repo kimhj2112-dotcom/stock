@@ -41,6 +41,20 @@
         border-bottom: 1px solid var(--line);
       }
 
+      .topbar-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 5px;
+        text-align: right;
+      }
+
+      .topbar-update {
+        color: var(--muted);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+      }
+
       .brand {
         display: flex;
         align-items: center;
@@ -185,6 +199,191 @@
       .overview-card .small {
         font-size: 14px;
         color: var(--muted);
+      }
+
+      .index-dashboard {
+        margin-top: 30px;
+      }
+
+      .index-dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .section-kicker {
+        display: block;
+        color: var(--blue);
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .index-dashboard-header h2 {
+        margin: 0;
+        font-size: 23px;
+      }
+
+      .indices-updated {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: right;
+      }
+
+      .index-markets {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+      }
+
+      .index-market-group h3 {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .index-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .index-market-group:last-child .index-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .index-card {
+        min-width: 0;
+        min-height: 148px;
+        padding: 14px;
+        background: rgba(255,255,255,0.025);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: border-color 0.18s ease, background 0.18s ease;
+      }
+
+      .index-card:hover,
+      .index-card:focus-visible,
+      .index-card.selected {
+        border-color: rgba(102,168,255,0.65);
+        background: rgba(102,168,255,0.06);
+      }
+
+      .index-card:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+
+      .index-card[aria-disabled="true"] {
+        cursor: not-allowed;
+        opacity: 0.72;
+      }
+
+      .index-chart-panel {
+        margin-top: 18px;
+        padding: 18px;
+        background: rgba(255,255,255,0.025);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+
+      .index-chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+
+      .index-chart-header h3 {
+        margin: 0;
+        font-size: 19px;
+      }
+
+      .index-chart-range {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .index-chart-canvas {
+        position: relative;
+        width: 100%;
+        height: 280px;
+      }
+
+      .index-chart-message {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .index-chart-message[hidden] {
+        display: none;
+      }
+
+      .index-card-top,
+      .index-card-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .index-card-ticker {
+        margin: 0 0 4px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .index-card h4 {
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .index-change {
+        flex: none;
+        padding: 5px 7px;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .index-change.up {
+        color: var(--green);
+        background: rgba(42,212,141,0.1);
+      }
+
+      .index-change.down {
+        color: var(--red);
+        background: rgba(255,93,115,0.1);
+      }
+
+      .index-value {
+        display: block;
+        margin: 12px 0 8px;
+        font-size: 22px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .index-card-bottom {
+        min-height: 26px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .index-sparkline {
+        width: 58px;
+        height: 26px;
+      }
+
+      .index-sparkline svg {
+        width: 100%;
+        height: 100%;
       }
 
       .signal-row {
@@ -807,8 +1006,43 @@
       }
 
       @media (max-width: 760px) {
+        .topbar {
+          flex-wrap: wrap;
+          row-gap: 10px;
+        }
+
+        .topbar-meta {
+          width: 100%;
+        }
+
         .header-box {
           grid-template-columns: 1fr;
+        }
+
+        .summary-row {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .market-overview,
+        .signal-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .index-markets {
+          grid-template-columns: 1fr;
+        }
+
+        .detail-grid,
+        .modal-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .index-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .index-chart-canvas {
+          height: 230px;
         }
 
         th:nth-child(3),
@@ -827,7 +1061,10 @@
           <div class="logo">G</div>
           <span>Global Stock Watch</span>
         </div>
-        <div class="subtext">NASDAQ · NYSE · AI / Cloud / Semis</div>
+        <div class="topbar-meta">
+          <span class="subtext">NASDAQ · NYSE · AI / Cloud / Semis</span>
+          <span class="topbar-update" id="header-updated" aria-live="polite">업데이트 대기 중</span>
+        </div>
       </div>
 
       <section class="header-box">
@@ -894,6 +1131,40 @@
           <div class="small" id="theme-average-detail">AI / Cloud / Semis</div>
         </div>
       </div>
+
+      <section class="index-dashboard" aria-labelledby="index-dashboard-title">
+        <div class="index-dashboard-header">
+          <div>
+            <span class="section-kicker">MARKET INDICES</span>
+            <h2 id="index-dashboard-title">미국 · 한국 주가지수</h2>
+          </div>
+          <span class="indices-updated" id="indices-updated" aria-live="polite">지수 데이터 불러오는 중</span>
+        </div>
+        <div class="index-markets">
+          <section class="index-market-group" aria-labelledby="us-indices-title">
+            <h3 id="us-indices-title">미국</h3>
+            <div class="index-grid" id="us-index-grid"></div>
+          </section>
+          <section class="index-market-group" aria-labelledby="kr-indices-title">
+            <h3 id="kr-indices-title">한국</h3>
+            <div class="index-grid" id="kr-index-grid"></div>
+          </section>
+        </div>
+        <section class="index-chart-panel" id="index-chart-panel" aria-live="polite" hidden>
+          <div class="index-chart-header">
+            <div>
+              <span class="section-kicker">DAILY CLOSE</span>
+              <h3 id="index-chart-title"></h3>
+              <p class="index-chart-range" id="index-chart-range"></p>
+            </div>
+            <button class="close-btn" id="index-chart-close" type="button" aria-label="지수 차트 닫기">×</button>
+          </div>
+          <div class="index-chart-canvas" id="index-chart-canvas-wrap">
+            <canvas id="index-chart-canvas" role="img"></canvas>
+          </div>
+          <p class="index-chart-message" id="index-chart-message" hidden></p>
+        </section>
+      </section>
 
       <div class="signal-row">
         <div class="signal-card" data-signal="buy" tabindex="0" role="button" aria-label="매수 신호 종목 보기">
@@ -1753,6 +2024,26 @@
       const buySignalEl = document.getElementById('buy-signal');
       const watchSignalEl = document.getElementById('watch-signal');
       const sellSignalEl = document.getElementById('sell-signal');
+      const indicesUpdatedEl = document.getElementById('indices-updated');
+      const headerUpdatedEl = document.getElementById('header-updated');
+      const marketIndices = [
+        { symbol: '^GSPC', ticker: 'SPX', name: 'S&P 500', market: 'us' },
+        { symbol: '^IXIC', ticker: 'NASDAQ', name: '나스닥 종합', market: 'us' },
+        { symbol: '^DJI', ticker: 'DOW', name: '다우존스', market: 'us' },
+        { symbol: '^KS11', ticker: 'KOSPI', name: '코스피', market: 'kr' },
+        { symbol: '^KQ11', ticker: 'KOSDAQ', name: '코스닥', market: 'kr' }
+      ];
+      const indexDashboard = document.querySelector('.index-dashboard');
+      const indexChartPanel = document.getElementById('index-chart-panel');
+      const indexChartTitle = document.getElementById('index-chart-title');
+      const indexChartRange = document.getElementById('index-chart-range');
+      const indexChartCanvas = document.getElementById('index-chart-canvas');
+      const indexChartCanvasWrap = document.getElementById('index-chart-canvas-wrap');
+      const indexChartMessage = document.getElementById('index-chart-message');
+      const indexChartClose = document.getElementById('index-chart-close');
+      let indexQuotes = {};
+      let selectedIndexSymbol = null;
+      let indexChartInstance = null;
       const modal = document.getElementById('stock-modal');
       const modalClose = document.getElementById('modal-close');
       const modalTitle = document.getElementById('modal-title');
@@ -1953,6 +2244,170 @@
             ></polyline>
           </svg>
         `;
+      };
+
+      const renderIndexCards = (quotes = {}, requestFailed = false) => {
+        for (const market of ['us', 'kr']) {
+          const grid = document.getElementById(`${market}-index-grid`);
+          grid.innerHTML = marketIndices
+            .filter(index => index.market === market)
+            .map(index => {
+              const quote = quotes[index.symbol];
+              const hasQuote = quote && !quote.fallback;
+              const changeValue = Number(quote?.changeValue || 0);
+              const changeClass = changeValue >= 0 ? 'up' : 'down';
+              const color = changeValue >= 0 ? '#2ad48d' : '#ff5d73';
+              const price = hasQuote
+                ? Number(quote.price).toLocaleString('en-US', { maximumFractionDigits: 2 })
+                : '--';
+              const change = hasQuote
+                ? `${changeValue >= 0 ? '+' : ''}${changeValue.toFixed(2)}%`
+                : requestFailed ? '조회 실패' : '불러오는 중';
+              const state = hasQuote
+                ? changeValue >= 0 ? '상승' : '하락'
+                : requestFailed || quote?.fallback ? '시세를 확인할 수 없습니다' : '데이터 연결 중';
+              const sparkline = hasQuote && quote.chart?.length
+                ? buildSparkline(quote.chart, color)
+                : '';
+
+              return `
+                <article class="index-card ${selectedIndexSymbol === index.symbol ? 'selected' : ''}" data-index-symbol="${index.symbol}" role="button" tabindex="${hasQuote ? '0' : '-1'}" aria-disabled="${!hasQuote}" aria-pressed="${selectedIndexSymbol === index.symbol}" aria-label="${index.name} 일별 차트 보기">
+                  <div class="index-card-top">
+                    <div>
+                      <p class="index-card-ticker">${index.ticker}</p>
+                      <h4>${index.name}</h4>
+                    </div>
+                    <span class="index-change ${hasQuote ? changeClass : ''}">${change}</span>
+                  </div>
+                  <strong class="index-value">${price}</strong>
+                  <div class="index-card-bottom">
+                    <span>${state}</span>
+                    <div class="index-sparkline">${sparkline}</div>
+                  </div>
+                </article>
+              `;
+            })
+            .join('');
+        }
+      };
+
+      async function hydrateIndices() {
+        try {
+          const symbols = marketIndices.map(index => encodeURIComponent(index.symbol)).join(',');
+          const response = await fetch(`/api/quotes?symbols=${symbols}`);
+          if (!response.ok) throw new Error(`Index quote request failed: ${response.status}`);
+
+          const payload = await response.json();
+          indexQuotes = Object.fromEntries((payload.items || []).map(item => [item.symbol, item]));
+          renderIndexCards(indexQuotes);
+          const updatedAt = new Date();
+          const formattedUpdate = new Intl.DateTimeFormat('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }).format(updatedAt);
+          headerUpdatedEl.textContent = `업데이트 ${formattedUpdate}`;
+          indicesUpdatedEl.textContent = `마지막 갱신 ${updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          if (selectedIndexSymbol) showIndexChart(selectedIndexSymbol, false);
+        } catch (error) {
+          console.error('Index quote hydration failed:', error);
+          indexQuotes = {};
+          renderIndexCards({}, true);
+          indicesUpdatedEl.textContent = '지수 데이터를 불러오지 못했습니다';
+        }
+      }
+
+      const showIndexChart = (symbol, scrollToPanel = true) => {
+        const index = marketIndices.find(item => item.symbol === symbol);
+        const quote = indexQuotes[symbol];
+        if (!index || !quote || quote.fallback) return;
+
+        selectedIndexSymbol = symbol;
+        indexDashboard.querySelectorAll('.index-card').forEach(card => {
+          const isSelected = card.dataset.indexSymbol === symbol;
+          card.classList.toggle('selected', isSelected);
+          card.setAttribute('aria-pressed', String(isSelected));
+        });
+
+        indexChartTitle.textContent = `${index.name} (${index.ticker})`;
+        indexChartPanel.hidden = false;
+        indexChartMessage.hidden = true;
+        indexChartCanvasWrap.hidden = false;
+
+        const hasDates = quote.chartLabels?.length === quote.chart?.length;
+        if (!hasDates || !quote.chart.length) {
+          indexChartRange.textContent = '날짜별 차트 데이터를 사용할 수 없습니다.';
+          indexChartCanvasWrap.hidden = true;
+          if (scrollToPanel) indexChartPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
+
+        const labels = quote.chartLabels;
+        indexChartRange.textContent = `${labels[0]} ~ ${labels[labels.length - 1]} · ${labels.length}거래일`;
+        indexChartCanvas.setAttribute('aria-label', `${index.name} 일별 종가, ${labels[0]}부터 ${labels[labels.length - 1]}까지`);
+        if (!window.Chart) {
+          indexChartMessage.textContent = '차트 라이브러리를 불러오지 못했습니다.';
+          indexChartMessage.hidden = false;
+          indexChartCanvasWrap.hidden = true;
+          return;
+        }
+
+        if (indexChartInstance) indexChartInstance.destroy();
+        const color = quote.changeValue >= 0 ? '#2ad48d' : '#ff5d73';
+        indexChartInstance = new Chart(indexChartCanvas, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: `${index.name} 종가`,
+              data: quote.chart,
+              borderColor: color,
+              backgroundColor: color === '#2ad48d' ? 'rgba(42,212,141,0.12)' : 'rgba(255,93,115,0.12)',
+              borderWidth: 2.5,
+              pointRadius: 2,
+              pointHoverRadius: 5,
+              tension: 0.25,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: items => items.length ? labels[items[0].dataIndex] : '',
+                  label: item => `${Number(item.raw).toLocaleString('en-US', { maximumFractionDigits: 2 })} pt`
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  color: '#a8b4d0',
+                  autoSkip: true,
+                  maxTicksLimit: 8,
+                  minRotation: 35,
+                  maxRotation: 50,
+                  callback: (_value, tickIndex) => labels[tickIndex]
+                }
+              },
+              y: {
+                grid: { color: 'rgba(255,255,255,0.08)' },
+                ticks: { color: '#a8b4d0', maxTicksLimit: 5 }
+              }
+            }
+          }
+        });
+
+        if (scrollToPanel) indexChartPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
 
       const renderDetailPanel = () => {
@@ -2290,15 +2745,45 @@
       });
 
       searchInput.addEventListener('input', renderPage);
-      refreshBtn.addEventListener('click', hydrateQuotes);
+      indexDashboard.addEventListener('click', event => {
+        const card = event.target.closest('.index-card');
+        if (card && card.getAttribute('aria-disabled') !== 'true') {
+          showIndexChart(card.dataset.indexSymbol);
+        }
+      });
+      indexDashboard.addEventListener('keydown', event => {
+        const card = event.target.closest('.index-card');
+        if (card && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          if (card.getAttribute('aria-disabled') !== 'true') showIndexChart(card.dataset.indexSymbol);
+        }
+      });
+      indexChartClose.addEventListener('click', () => {
+        indexChartPanel.hidden = true;
+        selectedIndexSymbol = null;
+        if (indexChartInstance) {
+          indexChartInstance.destroy();
+          indexChartInstance = null;
+        }
+        indexDashboard.querySelectorAll('.index-card').forEach(card => {
+          card.classList.remove('selected');
+          card.setAttribute('aria-pressed', 'false');
+        });
+      });
+      refreshBtn.addEventListener('click', () => {
+        hydrateQuotes();
+        hydrateIndices();
+      });
       modalClose.addEventListener('click', closeModal);
       modal.addEventListener('click', (event) => {
         if (event.target === modal) closeModal();
       });
       renderFilters();
       renderNews();
+      renderIndexCards();
       renderPage();
       hydrateQuotes();
+      hydrateIndices();
     </script>
   </body>
 </html>
