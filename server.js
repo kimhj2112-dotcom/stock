@@ -11,8 +11,17 @@ app.use(express.static(__dirname));
 
 const DEFAULT_SYMBOLS = ['MSFT', 'AAPL', 'NVDA', 'AMZN', 'GOOGL', 'META', 'AVGO', 'AMD', 'CRM', 'PLTR'];
 
+function buildYahooChartUrl(symbol) {
+  const normalizedSymbol = decodeURIComponent(String(symbol || '')).trim().toUpperCase();
+  const url = new URL(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(normalizedSymbol)}`);
+  url.searchParams.set('range', '1mo');
+  url.searchParams.set('interval', '1d');
+  return url.toString();
+}
+
 async function fetchQuoteFromYahoo(symbol) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1mo&interval=1d`;
+  const normalizedSymbol = decodeURIComponent(String(symbol || '')).trim().toUpperCase();
+  const url = buildYahooChartUrl(normalizedSymbol);
 
   const response = await fetch(url, {
     headers: {
@@ -69,7 +78,11 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/quotes', async (req, res) => {
   try {
-    const symbols = (req.query.symbols || DEFAULT_SYMBOLS.join(',')).split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+    const rawSymbols = Array.isArray(req.query.symbols) ? req.query.symbols.join(',') : (req.query.symbols || DEFAULT_SYMBOLS.join(','));
+    const symbols = rawSymbols
+      .split(',')
+      .map(s => decodeURIComponent(String(s || '')).trim().toUpperCase())
+      .filter(Boolean);
     const uniqueSymbols = [...new Set(symbols.length ? symbols : DEFAULT_SYMBOLS)];
 
     const data = await Promise.all(
