@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '16kb' }));
 app.use(express.static(__dirname));
 
 const DEFAULT_SYMBOLS = ['MSFT', 'AAPL', 'NVDA', 'AMZN', 'GOOGL', 'META', 'AVGO', 'AMD', 'CRM', 'PLTR'];
@@ -74,6 +74,48 @@ async function fetchQuoteFromYahoo(symbol) {
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
+});
+
+app.post('/api/comments', async (req, res) => {
+  const { ticker, name, comment, website } = req.body || {};
+  if (website) return res.status(202).json({ ok: true });
+
+  const normalizedTicker = String(ticker || '').trim().toUpperCase();
+  const normalizedName = String(name || '').trim().slice(0, 40) || '익명';
+  const normalizedComment = String(comment || '').trim();
+
+  if (!/^[A-Z][A-Z0-9.^-]{0,14}$/.test(normalizedTicker)) {
+    return res.status(400).json({ ok: false, message: '종목 정보를 확인해 주세요.' });
+  }
+  if (normalizedComment.length < 2 || normalizedComment.length > 1000) {
+    return res.status(400).json({ ok: false, message: '코멘트는 2자 이상 1,000자 이하로 입력해 주세요.' });
+  }
+
+  const endpoint = process.env.GOOGLE_SHEETS_WEB_APP_URL;
+  const secret = process.env.GOOGLE_SHEETS_SHARED_SECRET;
+  if (!endpoint || !secret) {
+    return res.status(503).json({ ok: false, message: 'Google Sheets 저장 서비스가 아직 설정되지 않았습니다.' });
+  }
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticker: normalizedTicker,
+        name: normalizedName,
+        comment: normalizedComment,
+        secret
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error('Google Sheets rejected the comment');
+    res.status(201).json({ ok: true, message: '코멘트를 등록했습니다.' });
+  } catch (error) {
+    console.error('Google Sheets comment save failed:', error.message);
+    res.status(502).json({ ok: false, message: '저장에 실패했습니다. 잠시 후 다시 시도해 주세요.' });
+  }
 });
 
 app.get('/api/quotes', async (req, res) => {
