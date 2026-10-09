@@ -170,6 +170,8 @@ def auth_error_message(error: Exception) -> tuple[int, str]:
     known_errors = {
         "email-already-exists": (409, "이미 가입된 이메일입니다."),
         "phone-number-already-exists": (409, "이미 등록된 전화번호입니다."),
+        "ALREADY_EXISTS": (409, "이미 등록된 이메일 또는 전화번호입니다. 아래 로그인 링크를 이용해 주세요."),
+        "already-exists": (409, "이미 등록된 이메일 또는 전화번호입니다. 아래 로그인 링크를 이용해 주세요."),
         "invalid-email": (400, "이메일 주소를 확인해 주세요."),
         "invalid-phone-number": (400, "전화번호를 확인해 주세요."),
         "invalid-password": (400, "비밀번호는 8자 이상 입력해 주세요."),

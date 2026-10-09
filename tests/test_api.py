@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
+from firebase_admin.exceptions import FirebaseError
 
 from app import app
 
@@ -62,6 +63,23 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(profile["email"], "test@example.com")
         self.assertEqual(profile["phoneNumber"], "+821012345678")
         self.assertNotIn("password", profile)
+
+    @patch("app.firebase_credentials_configured", return_value=True)
+    @patch("app.get_firebase_app", return_value=object())
+    @patch("app.auth.create_user", side_effect=FirebaseError("ALREADY_EXISTS", "duplicate user"))
+    def test_signup_reports_existing_email_or_phone_as_conflict(self, create_user, get_app, configured):
+        response = self.client.post(
+            "/api/auth/signup",
+            json={
+                "name": "Test User",
+                "email": "existing@example.com",
+                "password": "password123",
+                "phone": "010-1234-5678",
+            },
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("로그인", response.json()["message"])
 
     @patch("app.firebase_credentials_configured", return_value=True)
     @patch("app.get_firebase_app")
