@@ -1081,11 +1081,42 @@
         text-decoration: none;
       }
 
+      .topbar-auth {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .topbar-auth [hidden] {
+        display: none;
+      }
+
+      .topbar-user {
+        max-width: 180px;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 13px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .topbar-logout {
+        border: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+
       .topbar-login:hover {
         background: #e9e9e9;
       }
 
       .topbar-login:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 2px;
+      }
+
+      .topbar-logout:focus-visible {
         outline: 2px solid var(--text);
         outline-offset: 2px;
       }

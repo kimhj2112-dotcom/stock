@@ -731,6 +731,9 @@ const stocks = [
       const searchInput = document.getElementById('stock-search');
       const filterGroup = document.getElementById('filter-group');
       const refreshBtn = document.getElementById('refresh-btn');
+      const topbarLogin = document.getElementById('topbar-login');
+      const topbarUser = document.getElementById('topbar-user');
+      const topbarLogout = document.getElementById('topbar-logout');
       const lastRefreshEl = document.getElementById('last-refresh');
       const summaryCountEl = document.getElementById('summary-count');
       const marketSnapshotEl = document.getElementById('market-snapshot');
@@ -807,6 +810,7 @@ const stocks = [
       let activeFilter = 'all';
       let activeSignal = null;
       let selectedTicker = 'MSFT';
+      let quoteAnalysis = null;
 
       const syncSignalCards = () => {
         document.querySelectorAll('.signal-card[data-signal]').forEach(card => {
@@ -832,8 +836,12 @@ const stocks = [
 
       const updateMeta = (items) => {
         const bullish = items.filter(item => item.statusClass === 'up').length;
+        const usePythonAnalysis = quoteAnalysis && items.length === stocks.length && quoteAnalysis.count > 0;
         summaryCountEl.textContent = String(items.length);
-        marketSnapshotEl.textContent = bullish >= Math.ceil(items.length * 0.6) ? '강세' : '조정';
+        const advancerRatio = usePythonAnalysis
+          ? quoteAnalysis.advancers / quoteAnalysis.count
+          : bullish / Math.max(items.length, 1);
+        marketSnapshotEl.textContent = advancerRatio >= 0.6 ? '강세' : '조정';
 
         const sortedByMove = [...items].sort((a, b) => {
           const ar = Number.parseFloat((a.return || '0%').replace('%', '')) || 0;
@@ -841,27 +849,45 @@ const stocks = [
           return br - ar;
         });
 
-        const topGainer = sortedByMove[0] || items[0];
+        const topGainer = usePythonAnalysis
+          ? stocks.find(item => item.ticker === quoteAnalysis.topGainer?.symbol)
+          : sortedByMove[0] || items[0];
         const topLoser = [...items].sort((a, b) => {
           const ar = Number.parseFloat((a.change || '0%').replace('%', '')) || 0;
           const br = Number.parseFloat((b.change || '0%').replace('%', '')) || 0;
           return ar - br;
         })[0] || items[0];
+        const analyzedLoser = usePythonAnalysis
+          ? stocks.find(item => item.ticker === quoteAnalysis.topLoser?.symbol)
+          : topLoser;
 
-        const avg = items.length
+        const fallbackAverage = items.length
           ? items.reduce((total, item) => total + (Number.parseFloat((item.return || '0%').replace('%', '')) || 0), 0) / items.length
           : 0;
+        const avg = usePythonAnalysis ? quoteAnalysis.averageChangeValue : fallbackAverage;
 
         topGainerEl.textContent = topGainer?.ticker || 'N/A';
-        topGainerRateEl.textContent = topGainer?.return || '+0.0%';
-        topLoserEl.textContent = topLoser?.ticker || 'N/A';
-        topLoserRateEl.textContent = topLoser?.change || '-0.0%';
+        topGainerRateEl.textContent = usePythonAnalysis
+          ? `${quoteAnalysis.topGainer.changeValue >= 0 ? '+' : ''}${quoteAnalysis.topGainer.changeValue.toFixed(1)}%`
+          : topGainer?.return || '+0.0%';
+        topLoserEl.textContent = analyzedLoser?.ticker || 'N/A';
+        topLoserRateEl.textContent = usePythonAnalysis
+          ? `${quoteAnalysis.topLoser.changeValue >= 0 ? '+' : ''}${quoteAnalysis.topLoser.changeValue.toFixed(1)}%`
+          : analyzedLoser?.change || '-0.0%';
         themeAverageEl.textContent = `${avg >= 0 ? '+' : ''}${avg.toFixed(1)}%`;
-        themeAverageDetailEl.textContent = 'AI / Cloud / Semis';
+        themeAverageDetailEl.textContent = usePythonAnalysis
+          ? `일간 변동 · 표준편차 ${quoteAnalysis.volatility.toFixed(2)}%`
+          : 'AI / Cloud / Semis';
 
-        const buyCount = items.filter(item => item.statusClass === 'up').length;
-        const sellCount = items.filter(item => item.statusClass === 'down').length;
-        const watchCount = Math.max(0, items.length - buyCount - sellCount);
+        const buyCount = usePythonAnalysis
+          ? quoteAnalysis.advancers
+          : items.filter(item => item.statusClass === 'up').length;
+        const sellCount = usePythonAnalysis
+          ? quoteAnalysis.decliners
+          : items.filter(item => item.statusClass === 'down').length;
+        const watchCount = usePythonAnalysis
+          ? quoteAnalysis.unchanged
+          : Math.max(0, items.length - buyCount - sellCount);
         buySignalEl.textContent = String(Math.max(0, buyCount));
         sellSignalEl.textContent = String(Math.max(0, sellCount));
         watchSignalEl.textContent = String(Math.max(0, watchCount));
@@ -1410,6 +1436,34 @@ const stocks = [
         syncSignalCards();
       };
 
+      const hydrateAuthNavigation = async () => {
+        try {
+          const response = await fetch('/api/auth/session');
+          if (!response.ok) return;
+          const session = await response.json();
+          if (!session.authenticated) return;
+
+          topbarLogin.hidden = true;
+          topbarUser.textContent = session.user.name || session.user.email || '로그인됨';
+          topbarUser.hidden = false;
+          topbarLogout.hidden = false;
+        } catch (error) {
+          console.error('Authentication status check failed:', error);
+        }
+      };
+
+      topbarLogout.addEventListener('click', async () => {
+        topbarLogout.disabled = true;
+        try {
+          const response = await fetch('/api/auth/logout', { method: 'POST' });
+          if (!response.ok) throw new Error('Logout failed');
+          window.location.reload();
+        } catch (error) {
+          topbarLogout.disabled = false;
+          console.error('Logout failed:', error);
+        }
+      });
+
       const fetchQuote = async (symbol) => {
         const fallback = stocks.find(stock => stock.ticker === symbol) || { price: '$0.00', change: '+0.00%', pattern: [10, 12, 11, 14, 13, 15] };
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1mo&interval=1d`;
@@ -1450,6 +1504,7 @@ const stocks = [
           const payload = await response.json();
 
           if (payload && Array.isArray(payload.items)) {
+            quoteAnalysis = payload.analysis || null;
             payload.items.forEach(item => {
               const match = stocks.find(stock => stock.ticker === item.symbol);
               if (match) {
@@ -1556,5 +1611,6 @@ const stocks = [
       renderNews();
       renderIndexCards();
       renderPage();
+      hydrateAuthNavigation();
       hydrateQuotes();
       hydrateIndices();

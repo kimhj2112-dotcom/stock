@@ -9,7 +9,11 @@
   <body>
     <div class="container">
       <div class="topbar">
-        <a class="topbar-login" href="/login">로그인</a>
+        <div class="topbar-auth" id="topbar-auth">
+          <a class="topbar-login" id="topbar-login" href="/login">로그인</a>
+          <span class="topbar-user" id="topbar-user" hidden></span>
+          <button class="topbar-login topbar-logout" id="topbar-logout" type="button" hidden>로그아웃</button>
+        </div>
         <div class="brand">
           <div class="logo">G</div>
           <span>Global Stock Watch</span>

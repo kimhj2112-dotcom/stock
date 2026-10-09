@@ -2,6 +2,13 @@ const loginForm = document.getElementById('login-form');
 const loginMessage = document.getElementById('login-message');
 const loginButton = loginForm.querySelector('button[type="submit"]');
 
+fetch('/api/auth/session')
+  .then(response => response.ok ? response.json() : { authenticated: false })
+  .then(session => {
+    if (session.authenticated) window.location.replace('/');
+  })
+  .catch(() => {});
+
 loginForm.addEventListener('submit', async event => {
   event.preventDefault();
 
