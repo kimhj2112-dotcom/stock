@@ -1,0 +1,25 @@
+.signup-page .login-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 480px);
+}
+
+.signup-login-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.signup-login-row a {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .signup-page .login-layout {
+    grid-template-columns: 1fr;
+  }
+}

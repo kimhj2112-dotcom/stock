@@ -1,9 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { applicationDefault, cert, getApps, initializeApp } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+const { getDatabase, ServerValue } = require('firebase-admin/database');
+const { rateLimit } = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const DEFAULT_FIREBASE_DATABASE_URL = 'https://stock-database-5c0c9-default-rtdb.asia-southeast1.firebasedatabase.app';
+let firebaseDatabase;
+const signupRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { ok: false, message: '요청이 많습니다. 잠시 후 다시 시도해 주세요.' }
+});
 
 app.use(cors());
 app.use(express.json({ limit: '16kb' }));
@@ -17,6 +30,33 @@ function buildYahooChartUrl(symbol) {
   url.searchParams.set('range', '1mo');
   url.searchParams.set('interval', '1d');
   return url.toString();
+}
+
+function getFirebaseApp() {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccountJson && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    throw new Error('Firebase service account is not configured');
+  }
+
+  const existingApp = getApps().find(item => item.name === 'stock-api');
+  if (existingApp) return existingApp;
+
+  return initializeApp({
+    credential: serviceAccountJson ? cert(JSON.parse(serviceAccountJson)) : applicationDefault(),
+    databaseURL: process.env.FIREBASE_DATABASE_URL || DEFAULT_FIREBASE_DATABASE_URL
+  }, 'stock-api');
+}
+
+function normalizePhoneNumber(value) {
+  const phone = String(value || '').trim();
+  if (phone.startsWith('+')) {
+    const international = `+${phone.slice(1).replace(/\D/g, '')}`;
+    return /^\+[1-9]\d{7,14}$/.test(international) ? international : null;
+  }
+
+  const local = phone.replace(/\D/g, '');
+  if (!/^0\d{8,10}$/.test(local)) return null;
+  return `+82${local.slice(1)}`;
 }
 
 async function fetchQuoteFromYahoo(symbol) {
@@ -76,6 +116,51 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
+app.post('/api/auth/signup', signupRateLimit, async (req, res) => {
+  const name = String(req.body?.name || '').trim();
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  const phoneNumber = normalizePhoneNumber(req.body?.phone);
+
+  if (name.length < 2 || name.length > 40) {
+    return res.status(400).json({ ok: false, message: '회원 이름은 2자 이상 40자 이하로 입력해 주세요.' });
+  }
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ ok: false, message: '이메일 주소를 확인해 주세요.' });
+  }
+  if (!phoneNumber) {
+    return res.status(400).json({ ok: false, message: '전화번호를 확인해 주세요. 예: 010-1234-5678' });
+  }
+  if (password.length < 8 || password.length > 128) {
+    return res.status(400).json({ ok: false, message: '비밀번호는 8자 이상 128자 이하로 입력해 주세요.' });
+  }
+
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return res.status(503).json({ ok: false, message: 'Firebase 서비스 계정 설정이 필요합니다.' });
+  }
+
+  try {
+    const user = await getAuth(getFirebaseApp()).createUser({
+      displayName: name,
+      email,
+      password,
+      phoneNumber
+    });
+    res.status(201).json({ ok: true, uid: user.uid, message: '회원가입이 완료되었습니다.' });
+  } catch (error) {
+    const knownErrors = {
+      'auth/email-already-exists': [409, '이미 가입된 이메일입니다.'],
+      'auth/phone-number-already-exists': [409, '이미 등록된 전화번호입니다.'],
+      'auth/invalid-email': [400, '이메일 주소를 확인해 주세요.'],
+      'auth/invalid-phone-number': [400, '전화번호를 확인해 주세요.'],
+      'auth/invalid-password': [400, '비밀번호는 8자 이상 입력해 주세요.']
+    };
+    const [status, message] = knownErrors[error.code] || [503, 'Firebase 설정을 확인해 주세요.'];
+    console.error('Firebase signup failed:', error.code || 'unknown');
+    res.status(status).json({ ok: false, message });
+  }
+});
+
 app.post('/api/comments', async (req, res) => {
   const { ticker, name, comment, website } = req.body || {};
   if (website) return res.status(202).json({ ok: true });
@@ -91,30 +176,27 @@ app.post('/api/comments', async (req, res) => {
     return res.status(400).json({ ok: false, message: '코멘트는 2자 이상 1,000자 이하로 입력해 주세요.' });
   }
 
-  const endpoint = process.env.GOOGLE_SHEETS_WEB_APP_URL;
-  const secret = process.env.GOOGLE_SHEETS_SHARED_SECRET;
-  if (!endpoint || !secret) {
-    return res.status(503).json({ ok: false, message: 'Google Sheets 저장 서비스가 아직 설정되지 않았습니다.' });
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccountJson && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    return res.status(503).json({ ok: false, message: 'Firebase 서비스 계정 설정이 필요합니다.' });
   }
 
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ticker: normalizedTicker,
-        name: normalizedName,
-        comment: normalizedComment,
-        secret
-      }),
-      signal: AbortSignal.timeout(10000)
+    if (!firebaseDatabase) {
+      firebaseDatabase = getDatabase(getFirebaseApp());
+    }
+
+    const commentRef = firebaseDatabase.ref(`comments/${normalizedTicker}`).push();
+    await commentRef.set({
+      ticker: normalizedTicker,
+      name: normalizedName,
+      comment: normalizedComment,
+      createdAt: ServerValue.TIMESTAMP
     });
-    const result = await response.json();
-    if (!response.ok || !result.ok) throw new Error('Google Sheets rejected the comment');
     res.status(201).json({ ok: true, message: '코멘트를 등록했습니다.' });
   } catch (error) {
-    console.error('Google Sheets comment save failed:', error.message);
-    res.status(502).json({ ok: false, message: '저장에 실패했습니다. 잠시 후 다시 시도해 주세요.' });
+    console.error('Firebase comment save failed:', error.message);
+    res.status(503).json({ ok: false, message: 'Firebase 저장 설정을 확인해 주세요.' });
   }
 });
 
@@ -160,6 +242,14 @@ app.get('/api/stock', async (req, res) => {
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, 'signup.html'));
 });
 
 app.get(/.*/, (req, res) => {

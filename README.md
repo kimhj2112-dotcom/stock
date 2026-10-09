@@ -4,7 +4,15 @@
 
 ## 프로젝트 구성
 
-- `index.html`: 메인 프론트엔드 화면
+- `index.html`: 화면 구조 및 리소스 연결
+- `login.html`: 로그인 화면 (`/login`)
+- `signup.html`: 회원가입 화면 (`/signup`)
+- `css/app.css`: 화면 스타일
+- `css/login.css`: 로그인 화면 스타일
+- `css/signup.css`: 회원가입 화면 스타일
+- `js/app.js`: 대시보드 동작과 브라우저 로직
+- `js/login.js`: 로그인 화면 제출 안내
+- `js/signup.js`: 회원가입 화면 입력 검증과 API 요청
 - `server.js`: Express 기반 백엔드 API 서버
 - `package.json`: 실행 스크립트와 의존성
 
@@ -25,27 +33,30 @@
    http://localhost:3001
    ```
 
-## 종목 코멘트 Google Sheets 연동
+## 종목 코멘트 Firebase 연동
 
-1. 코멘트를 저장할 Google 스프레드시트에서 **확장 프로그램 > Apps Script**를 엽니다.
-2. `google-apps-script/Code.gs`의 코드를 붙여넣고 저장합니다. `종목 코멘트` 시트가 없으면 첫 제출 때 자동 생성됩니다.
-3. Apps Script **프로젝트 설정 > 스크립트 속성**에 `SPREADSHEET_ID`(스프레드시트 URL의 `/d/`와 `/edit` 사이 값)와 `SHARED_SECRET`(충분히 긴 임의 값)을 추가합니다.
-4. **배포 > 새 배포 > 웹 앱**에서 실행 사용자를 본인으로, 액세스 권한을 모든 사용자로 설정해 배포합니다. 생성된 `/exec` URL을 사용합니다.
-5. 서버를 실행하는 환경에 다음 환경변수를 설정합니다. 두 값은 브라우저 코드에 넣지 마세요.
+코멘트는 Realtime Database의 `comments/{티커}/{pushId}` 경로에 저장됩니다. 서버는 Firebase Admin SDK로 접근하므로 브라우저에 관리자 키를 노출하지 않습니다.
 
-   ```text
-   GOOGLE_SHEETS_WEB_APP_URL=https://script.google.com/macros/s/.../exec
-   GOOGLE_SHEETS_SHARED_SECRET=<Apps Script의 SHARED_SECRET과 같은 값>
-   ```
+1. Firebase Console에서 Realtime Database가 생성되어 있는지 확인합니다. 기본 URL은 `https://stock-database-5c0c9-default-rtdb.asia-southeast1.firebasedatabase.app`이며, 다른 DB를 쓰면 `FIREBASE_DATABASE_URL`로 덮어씁니다.
+2. 프로젝트 설정의 **서비스 계정**에서 서버용 서비스 계정 키를 생성합니다. JSON 키 파일은 저장소 밖의 안전한 경로에 둡니다.
+3. Realtime Database **규칙**에 [`database.rules.json`](database.rules.json)의 규칙을 적용합니다. Admin SDK 서버 요청은 이 클라이언트 규칙을 우회하며, 브라우저에서 직접 읽고 쓰는 것은 차단됩니다.
+4. 서버 환경에 서비스 계정 경로를 설정하고 실행합니다.
 
-   PowerShell 로컬 실행 예시:
    ```powershell
-   $env:GOOGLE_SHEETS_WEB_APP_URL = "https://script.google.com/macros/s/.../exec"
-   $env:GOOGLE_SHEETS_SHARED_SECRET = "<같은 비밀 값>"
+   $env:GOOGLE_APPLICATION_CREDENTIALS = "C:\secure\firebase-service-account.json"
+   $env:FIREBASE_DATABASE_URL = "https://stock-database-5c0c9-default-rtdb.asia-southeast1.firebasedatabase.app"
    npm.cmd start
    ```
 
-환경변수가 설정되지 않으면 코멘트는 저장되지 않으며 폼에 설정 안내가 표시됩니다.
+서비스 계정 키 파일은 Git에 커밋하지 마세요. 자격 증명이 설정되지 않았거나 Firebase 접근에 실패하면 코멘트 저장 API는 오류를 반환합니다.
+
+## Firebase 회원가입
+
+Firebase Console의 **Authentication > Sign-in method**에서 이메일/비밀번호 로그인을 활성화합니다. 회원가입 폼은 서버의 `/api/auth/signup`을 호출해 계정을 생성하고, 회원 이름과 전화번호를 Firebase Authentication 프로필에 저장합니다. 한국 국내 전화번호는 `+82` 국제 형식으로 변환됩니다. 코멘트 저장과 동일한 Firebase 서비스 계정 설정을 사용하며, 가입 요청은 IP당 15분에 5회로 제한됩니다.
+
+## Firebase 회원가입
+
+Firebase Console의 **Authentication > Sign-in method**에서 이메일/비밀번호 로그인을 활성화합니다. 위의 Firebase 서비스 계정 설정을 사용하면 회원가입 API가 계정을 생성하고 회원 이름(`displayName`)과 전화번호(`phoneNumber`)를 Firebase Authentication 프로필에 저장합니다. 전화번호는 한국 국내 형식을 `+82` E.164 형식으로 변환합니다. 가입 API는 IP당 15분에 5회로 제한됩니다.
 
 ## 제공 기능
 

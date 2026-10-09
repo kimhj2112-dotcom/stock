@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>로그인 | Global Stock Watch</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+    <script src="/js/login.js" defer></script>
+  </head>
+  <body class="login-page">
+    <header class="login-header">
+      <a class="login-brand" href="/" aria-label="Global Stock Watch 홈">
+        <span class="logo">G</span>
+        <span>Global Stock Watch</span>
+      </a>
+      <a class="login-return" href="/">대시보드</a>
+    </header>
+
+    <main class="login-layout">
+      <section class="login-intro">
+        <p class="login-eyebrow">GLOBAL STOCK WATCH / ACCOUNT</p>
+        <h1>다시 만나<br />반갑습니다.</h1>
+        <p class="login-description">로그인하고 관심 종목과 시장 흐름을 이어서 확인하세요.</p>
+      </section>
+
+      <section class="login-panel" aria-labelledby="login-title">
+        <div class="login-panel-heading">
+          <h2 id="login-title">로그인</h2>
+          <p>계정 정보를 입력해 주세요.</p>
+        </div>
+        <form id="login-form" class="login-form">
+          <label for="login-email">이메일</label>
+          <input id="login-email" name="email" type="email" autocomplete="username" required placeholder="name@example.com" />
+          <label for="login-password">비밀번호</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="비밀번호 입력" />
+          <button type="submit">로그인</button>
+          <p id="login-message" class="login-message" aria-live="polite"></p>
+        </form>
+        <div class="login-signup-row">
+          <span>아직 계정이 없으신가요?</span>
+          <a href="/signup" class="login-signup-button">회원가입</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

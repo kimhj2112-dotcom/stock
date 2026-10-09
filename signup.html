@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원가입 | Global Stock Watch</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+    <link rel="stylesheet" href="/css/signup.css" />
+    <script src="/js/signup.js" defer></script>
+  </head>
+  <body class="login-page signup-page">
+    <header class="login-header">
+      <a class="login-brand" href="/" aria-label="Global Stock Watch 홈">
+        <span class="logo">G</span>
+        <span>Global Stock Watch</span>
+      </a>
+      <a class="login-return" href="/">대시보드</a>
+    </header>
+
+    <main class="login-layout">
+      <section class="login-intro">
+        <p class="login-eyebrow">GLOBAL STOCK WATCH / ACCOUNT</p>
+        <h1>시장의 흐름을<br />함께 살펴보세요.</h1>
+        <p class="login-description">계정을 만들고 관심 종목과 시장 데이터를 한곳에서 확인하세요.</p>
+      </section>
+
+      <section class="login-panel" aria-labelledby="signup-title">
+        <div class="login-panel-heading">
+          <h2 id="signup-title">회원가입</h2>
+          <p>새 계정 정보를 입력해 주세요.</p>
+        </div>
+        <form id="signup-form" class="login-form">
+          <label for="signup-name">회원 이름</label>
+          <input id="signup-name" name="name" type="text" autocomplete="name" maxlength="40" required placeholder="회원 이름 입력" />
+          <label for="signup-phone">전화번호</label>
+          <input id="signup-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" required placeholder="010-1234-5678" />
+          <label for="signup-email">이메일</label>
+          <input id="signup-email" name="email" type="email" autocomplete="email" required placeholder="name@example.com" />
+          <label for="signup-password">비밀번호</label>
+          <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8" required placeholder="8자 이상 입력" />
+          <label for="signup-password-confirm">비밀번호 확인</label>
+          <input id="signup-password-confirm" name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required placeholder="비밀번호 다시 입력" />
+          <button type="submit">계정 만들기</button>
+          <p id="signup-message" class="login-message" aria-live="polite"></p>
+        </form>
+        <div class="signup-login-row">
+          <span>이미 계정이 있으신가요?</span>
+          <a href="/login">로그인</a>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
