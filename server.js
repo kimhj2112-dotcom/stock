@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -9,6 +11,8 @@ const { rateLimit } = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const DEFAULT_FIREBASE_DATABASE_URL = 'https://stock-database-5c0c9-default-rtdb.asia-southeast1.firebasedatabase.app';
+const SESSION_COOKIE_NAME = 'stock_session';
+const SESSION_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
 let firebaseDatabase;
 const signupRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -16,6 +20,13 @@ const signupRateLimit = rateLimit({
   standardHeaders: 'draft-8',
   legacyHeaders: false,
   message: { ok: false, message: '요청이 많습니다. 잠시 후 다시 시도해 주세요.' }
+});
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { ok: false, message: '로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.' }
 });
 
 app.use(cors());
@@ -57,6 +68,22 @@ function normalizePhoneNumber(value) {
   const local = phone.replace(/\D/g, '');
   if (!/^0\d{8,10}$/.test(local)) return null;
   return `+82${local.slice(1)}`;
+}
+
+function readSessionCookie(req) {
+  const prefix = `${SESSION_COOKIE_NAME}=`;
+  const entry = (req.headers.cookie || '').split(';').map(value => value.trim()).find(value => value.startsWith(prefix));
+  return entry ? decodeURIComponent(entry.slice(prefix.length)) : null;
+}
+
+function setSessionCookie(res, value) {
+  res.cookie(SESSION_COOKIE_NAME, value, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: SESSION_DURATION_MS
+  });
 }
 
 async function fetchQuoteFromYahoo(symbol) {
@@ -159,6 +186,72 @@ app.post('/api/auth/signup', signupRateLimit, async (req, res) => {
     console.error('Firebase signup failed:', error.code || 'unknown');
     res.status(status).json({ ok: false, message });
   }
+});
+
+app.post('/api/auth/login', loginRateLimit, async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  const webApiKey = process.env.FIREBASE_WEB_API_KEY;
+
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !password) {
+    return res.status(400).json({ ok: false, message: '이메일과 비밀번호를 확인해 주세요.' });
+  }
+  if (!webApiKey || (!process.env.FIREBASE_SERVICE_ACCOUNT && !process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
+    return res.status(503).json({ ok: false, message: 'Firebase 로그인 설정을 확인해 주세요.' });
+  }
+
+  try {
+    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(webApiKey)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+      signal: AbortSignal.timeout(10000)
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      const errorCode = result.error?.message;
+      if (errorCode === 'TOO_MANY_ATTEMPTS_TRY_LATER') {
+        return res.status(429).json({ ok: false, message: '로그인 시도가 많습니다. 잠시 후 다시 시도해 주세요.' });
+      }
+      if (['EMAIL_NOT_FOUND', 'INVALID_PASSWORD', 'INVALID_LOGIN_CREDENTIALS', 'USER_DISABLED'].includes(errorCode)) {
+        return res.status(401).json({ ok: false, message: '이메일 또는 비밀번호를 확인해 주세요.' });
+      }
+      throw new Error(errorCode || 'Firebase sign-in failed');
+    }
+
+    const sessionCookie = await getAuth(getFirebaseApp()).createSessionCookie(result.idToken, { expiresIn: SESSION_DURATION_MS });
+    setSessionCookie(res, sessionCookie);
+    res.json({ ok: true, message: '로그인되었습니다.' });
+  } catch (error) {
+    console.error('Firebase login failed:', error.message);
+    res.status(503).json({ ok: false, message: 'Firebase 로그인 설정을 확인해 주세요.' });
+  }
+});
+
+app.get('/api/auth/session', async (req, res) => {
+  const sessionCookie = readSessionCookie(req);
+  if (!sessionCookie) return res.json({ authenticated: false });
+
+  try {
+    const session = await getAuth(getFirebaseApp()).verifySessionCookie(sessionCookie, true);
+    res.json({
+      authenticated: true,
+      user: { uid: session.uid, email: session.email || '', name: session.name || '' }
+    });
+  } catch {
+    res.clearCookie(SESSION_COOKIE_NAME, { httpOnly: true, sameSite: 'lax', path: '/' });
+    res.json({ authenticated: false });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie(SESSION_COOKIE_NAME, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+  res.json({ ok: true, message: '로그아웃되었습니다.' });
 });
 
 app.post('/api/comments', async (req, res) => {

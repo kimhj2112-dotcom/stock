@@ -54,6 +54,10 @@
 
 Firebase Console의 **Authentication > Sign-in method**에서 이메일/비밀번호 로그인을 활성화합니다. 회원가입 폼은 서버의 `/api/auth/signup`을 호출해 계정을 생성하고, 회원 이름과 전화번호를 Firebase Authentication 프로필에 저장합니다. 한국 국내 전화번호는 `+82` 국제 형식으로 변환됩니다. 코멘트 저장과 동일한 Firebase 서비스 계정 설정을 사용하며, 가입 요청은 IP당 15분에 5회로 제한됩니다.
 
+로그인 폼은 Firebase Web API로 비밀번호를 확인한 뒤 5일 유효한 HttpOnly 세션 쿠키를 발급합니다. 로그인을 사용하려면 `.env`에 `FIREBASE_WEB_API_KEY`도 설정해야 합니다. 세션 확인은 `/api/auth/session`, 로그아웃은 `/api/auth/logout`을 사용합니다.
+
+로컬 환경변수는 `.env`에서 읽습니다. `.env.example`을 참고해 서비스 계정 JSON의 경로를 지정하고, JSON 키 파일은 저장소 밖에 보관하세요. `.env`는 Git에서 제외됩니다.
+
 ## Firebase 회원가입
 
 Firebase Console의 **Authentication > Sign-in method**에서 이메일/비밀번호 로그인을 활성화합니다. 위의 Firebase 서비스 계정 설정을 사용하면 회원가입 API가 계정을 생성하고 회원 이름(`displayName`)과 전화번호(`phoneNumber`)를 Firebase Authentication 프로필에 저장합니다. 전화번호는 한국 국내 형식을 `+82` E.164 형식으로 변환합니다. 가입 API는 IP당 15분에 5회로 제한됩니다.
