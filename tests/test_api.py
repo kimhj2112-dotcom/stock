@@ -1,4 +1,5 @@
 import unittest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -35,6 +36,32 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("전화번호", response.json()["message"])
+
+    @patch("app.firebase_credentials_configured", return_value=True)
+    @patch("app.get_firebase_app", return_value=object())
+    @patch("app.auth.create_user", return_value=SimpleNamespace(uid="test-user"))
+    @patch("app.db.reference")
+    def test_signup_saves_profile_without_password(self, reference, create_user, get_app, configured):
+        profile_ref = MagicMock()
+        reference.return_value = profile_ref
+
+        response = self.client.post(
+            "/api/auth/signup",
+            json={
+                "name": "Test User",
+                "email": "test@example.com",
+                "password": "must-not-be-stored",
+                "phone": "010-1234-5678",
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        reference.assert_called_once_with("users/test-user", app=get_app.return_value)
+        profile = profile_ref.set.call_args.args[0]
+        self.assertEqual(profile["name"], "Test User")
+        self.assertEqual(profile["email"], "test@example.com")
+        self.assertEqual(profile["phoneNumber"], "+821012345678")
+        self.assertNotIn("password", profile)
 
     @patch("app.firebase_credentials_configured", return_value=True)
     @patch("app.get_firebase_app")

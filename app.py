@@ -209,16 +209,33 @@ def signup(request: Request, payload: dict):
     if not firebase_credentials_configured():
         return JSONResponse(status_code=503, content={"ok": False, "message": "Firebase 서비스 계정 설정이 필요합니다."})
 
+    firebase_app = None
+    user = None
     try:
+        firebase_app = get_firebase_app()
         user = auth.create_user(
             display_name=name,
             email=email,
             password=password,
             phone_number=phone_number,
-            app=get_firebase_app(),
+            app=firebase_app,
+        )
+        db.reference(f"users/{user.uid}", app=firebase_app).set(
+            {
+                "uid": user.uid,
+                "name": name,
+                "email": email,
+                "phoneNumber": phone_number,
+                "createdAt": {".sv": "timestamp"},
+            }
         )
         return JSONResponse(status_code=201, content={"ok": True, "uid": user.uid, "message": "회원가입이 완료되었습니다."})
     except Exception as error:
+        if user and firebase_app:
+            try:
+                auth.delete_user(user.uid, app=firebase_app)
+            except Exception as cleanup_error:
+                logger.error("Firebase signup rollback failed: %s", getattr(cleanup_error, "code", type(cleanup_error).__name__))
         status, message = auth_error_message(error)
         logger.error("Firebase signup failed: %s", getattr(error, "code", type(error).__name__))
         return JSONResponse(status_code=status, content={"ok": False, "message": message})

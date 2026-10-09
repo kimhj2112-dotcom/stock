@@ -61,7 +61,7 @@
 
 ## Firebase 인증
 
-Firebase Console의 **Authentication > Sign-in method**에서 이메일/비밀번호 로그인을 활성화합니다. `/api/auth/signup`은 계정을 생성하고 회원 이름(`displayName`)과 전화번호(`phoneNumber`)를 저장하며, 국내 번호를 `+82` E.164 형식으로 변환합니다. 가입 요청은 IP당 15분에 5회로 제한됩니다.
+Firebase Console의 **Authentication > Sign-in method**에서 이메일/비밀번호 로그인을 활성화합니다. `/api/auth/signup`은 계정과 안전하게 해시된 비밀번호를 Firebase Authentication에 생성하고, 회원 이름·이메일·전화번호·가입 시각을 Realtime Database `users/{uid}` 프로필에 저장합니다. 국내 번호는 `+82` E.164 형식으로 변환합니다. 비밀번호 원문은 Realtime Database에 저장하지 않습니다. 가입 요청은 IP당 15분에 5회로 제한됩니다.
 
 로그인은 Firebase Web API로 비밀번호를 확인한 뒤 5일 유효한 HttpOnly 세션 쿠키를 발급합니다. `.env`에 `FIREBASE_WEB_API_KEY`를 설정해야 합니다. 세션 확인은 `/api/auth/session`, 로그아웃은 `/api/auth/logout`입니다.
 
